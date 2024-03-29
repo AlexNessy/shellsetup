@@ -1,4 +1,4 @@
-# This project is for setting up shell and all customizations from a single script
+# Shell Setup
 ## CURRENT ADDITIONS:
 [] Installing packages  
 [] Setting up aliases  
