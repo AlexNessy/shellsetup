@@ -44,6 +44,7 @@ checker zsh
 checker bat
 checker smbclient
 checker tldr
+checker fzf
 echo ""
 echo "All packages installed"
 echo ""
