@@ -12,7 +12,7 @@ else
 fi
 }
 #add aliases here followed by \n
-alias=("alias nv='nvim'" "\nalias sp='sudo pacman'" "\nalias chx='chmod +x'")
+alias=("alias nv='nvim'" "\nalias sp='sudo pacman'" "\nalias chx='chmod +x'" "\nalias snv='sudo nvim'")
 echo "Welcome to..."
 echo -e " ${GREEN}
          __         ____          __            
