@@ -1,15 +1,9 @@
-#!/bin/bash
+#!/bin/bash 
 GREEN='\033[0;32m'
 NC='\033[0m'
 #install function
 function checker () {
-which "$1"
-exitCode=$?
-if [[ $exitCode == 0 ]]; then
-    echo "$1 is installed"
-else
-    sudo pacman -S --noconfirm "$1"
-fi
+  sudo pacman -S --noconfirm --needed $1
 }
 #add aliases here followed by \n
 alias=("alias nv='nvim'" "\nalias sp='sudo pacman'" "\nalias chx='chmod +x'" "\nalias snv='sudo nvim'")
@@ -31,20 +25,27 @@ fi
 checker cmatrix
 checker neofetch
 checker btop
-which nvim
-exitCode=$?
-if [[ $exitCode == 0 ]]; then
-    echo "neovim is installed"
-else
-    sudo pacman -S --noconfirm neovim
-fi
 checker git
+checker neovim
 checker fastfetch
 checker zsh
 checker bat
 checker smbclient
 checker tldr
 checker fzf
+which yay
+exitCode=$?
+if [[ $exitCode == 0 ]]; then
+  echo ""
+else
+  sudo pacman -S --needed --noconfirm base-devel git
+  git clone https://aur.archlinux.org/yay.git
+  cd yay
+  makepkg -si --noconfirm
+  cd ..
+  rm -rf yay
+fi
+yay -S --needed --noconfirm ttf-meslo-nerd-font-powerlevel10k
 echo ""
 echo "All packages installed"
 echo ""
@@ -55,6 +56,14 @@ if [[ $shell != 1 ]] && [[ $shell != 2 ]]; then
 fi
 if [[ $choice == 1 ]]; then
     if [[ $shell == 1 ]]; then
+        #check if zsh is installed and make default shell
+        checker zsh
+        Shell=$(which zsh)
+        if [[ $SHELL != $Shell ]]; then
+          chsh -s ${Shell}
+        else
+          echo ""
+        fi
         #ohmyzsh installation
         wget https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh -O - | sed s/RUNZSH:-yes/RUNZSH:-no/g | sh
         #plugins installation
@@ -76,6 +85,14 @@ if [[ $choice == 1 ]]; then
         /bin/zsh -c 'source ~/.zshrc'
         echo "changes made and applied! you can now restart your terminal for p10k configuration."
     else
+        #make sure bash is installed
+        checker bash
+        Shell=$(which bash)
+        if [[ $SHELL != $Shell ]]; then
+          chsh -s ${Shell}
+        else
+          echo ""
+        fi
         #ohmybash installation
         bash -c "$(wget https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh -O -)" --unattended
         #aliases add
@@ -91,6 +108,14 @@ if [[ $choice == 1 ]]; then
     fi
 elif [[ $choice == 2 ]]; then
     if [[ $shell == 1 ]]; then
+        #check if zsh is installed and make default shell
+        checker zsh
+        Shell=$(which zsh)
+        if [[ $SHELL != $Shell ]]; then
+          chsh -s ${Shell}
+        else
+          echo ""
+        fi
         #aliases add
         grep -q 'alias sp=' ~/.zshrc
         exitCode=$?
@@ -102,6 +127,14 @@ elif [[ $choice == 2 ]]; then
         /bin/zsh -c 'source ~/.zshrc'
         echo "changes made and applied! you can now restart your terminal"
     else
+        #make sure bash is installed 
+        checker bash
+        Shell=$(which bash)
+        if [[ $SHELL != $Shell ]]; then
+          chsh -s ${Shell}
+        else
+          echo ""
+        fi
         #aliases add
         grep -q 'alias sp=' ~/.bashrc
         exitCode=$?
