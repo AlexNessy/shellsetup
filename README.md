@@ -7,5 +7,4 @@
 
 ## TO DO:  
 - [ ] Package manager chooser  
-- [x] Merge fullsetup and litesetup into install.sh  
 - [ ] Splitting into multiple scripts (once install.sh gets too full)  
