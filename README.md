@@ -7,4 +7,3 @@
 
 ## TO DO:  
 - [ ] Package manager chooser  
-- [ ] Splitting into multiple scripts (once install.sh gets too full)  
