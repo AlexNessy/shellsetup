@@ -6,7 +6,7 @@ function checker () {
   sudo pacman -S --noconfirm --needed $1
 }
 #add aliases here followed by \n
-alias=("alias nv='nvim'" "\nalias sp='sudo pacman'" "\nalias chx='chmod +x'" "\nalias snv='sudo nvim'")
+alias=("alias nv='nvim'" "\nalias sp='sudo pacman'" "\nalias chx='chmod +x'" "\nalias gitc='git add .; git commit -m 'New Additions'; git push'")
 echo "Welcome to..."
 echo -e " ${GREEN}
          __         ____          __            
