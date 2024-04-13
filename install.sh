@@ -43,7 +43,7 @@ else
   sudo pacman -S --needed --noconfirm base-devel git
   git clone https://aur.archlinux.org/yay.git
   cd yay
-  makepkg -si --noconfirm
+makepkg -si --noconfirm
   cd ..
   rm -rf yay
 fi
