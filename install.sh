@@ -1,6 +1,8 @@
 #!/bin/bash 
 GREEN='\033[0;32m'
 NC='\033[0m'
+#current dir
+currentDir=$(pwd)
 #install function
 function checker () {
   sudo pacman -S --noconfirm --needed $1
@@ -45,11 +47,14 @@ else
   cd ..
   rm -rf yay
 fi
-yay -S --needed --noconfirm ttf-meslo-nerd-font-powerlevel10k
+cd $currentDir
+wget "https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS NF Regular.ttf"
+mkdir ~/.local/share/fonts
+mv 'MesloLGS NF Regular.ttf' ~/.local/share/fonts
 echo ""
 echo "All packages installed"
 echo ""
-echo -e "What shell do you use? \n(1) zsh \n(2) bash \n(3) skip shell config"
+echo -e "What shell do you want to use? \n(1) zsh \n(2) bash \n(3) skip shell config"
 read -r shell
 if [[ $shell != 1 ]] && [[ $shell != 2 ]]; then
     exit
@@ -84,7 +89,7 @@ if [[ $choice == 1 ]]; then
             echo -e "${alias[@]}" >> ~/.zshrc
         fi
         /bin/zsh -c 'source ~/.zshrc'
-        echo "changes made and applied! you can now restart your terminal for p10k configuration."
+        echo "changes made and applied! you can now restart your terminal for p10k configuration. make sure to change your font to MesloLGS in your console settings."
     else
         #make sure bash is installed
         checker bash
