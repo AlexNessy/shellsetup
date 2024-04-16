@@ -4,9 +4,25 @@ NC='\033[0m'
 #current dir
 currentDir=$(pwd)
 #install function
-function checker () {
-  sudo pacman -S --noconfirm --needed $1
-}
+which dnf
+dnfCode=$?
+which pacman
+pacmanCode=$?
+which apt
+aptCode=$?
+if [[ $dnfCode == 0 ]]; then
+  function checker(){
+    sudo dnf -y install "$1"
+  }
+elif [[ $pacmanCode == 0 ]]; then
+  function checker(){
+    sudo pacman -S --noconfirm --needed "$1"
+  }
+elif [[ $aptCode == 0 ]]; then
+  sudo apt -y install "$1"
+else
+  echo "This package manager is not supported yet"
+fi
 #add aliases here followed by \n
 alias=("alias nv='nvim'" "\nalias sp='sudo pacman'" "\nalias chx='chmod +x'" "\nalias gitc='git add .; git commit -m 'New Additions'; git push'")
 echo "Welcome to..."
@@ -35,19 +51,23 @@ checker bat
 checker smbclient
 checker tldr
 checker fzf
-which yay
-exitCode=$?
-if [[ $exitCode == 0 ]]; then
-  echo ""
+if [[ $pacmanCode == 0 ]]; then
+  which yay
+  exitCode=$?
+  if [[ $exitCode == 0 ]]; then
+    echo ""
+  else
+    sudo pacman -S --needed --noconfirm base-devel git
+    git clone https://aur.archlinux.org/yay.git
+    cd yay || exit
+  makepkg -si --noconfirm
+    cd ..
+    rm -rf yay
+    cd "$currentDir" || exit
+  fi
 else
-  sudo pacman -S --needed --noconfirm base-devel git
-  git clone https://aur.archlinux.org/yay.git
-  cd yay
-makepkg -si --noconfirm
-  cd ..
-  rm -rf yay
+  echo ""
 fi
-cd $currentDir
 wget "https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS NF Regular.ttf"
 mkdir ~/.local/share/fonts
 mv 'MesloLGS NF Regular.ttf' ~/.local/share/fonts
@@ -64,8 +84,8 @@ if [[ $choice == 1 ]]; then
         #check if zsh is installed and make default shell
         checker zsh
         Shell=$(which zsh)
-        if [[ $SHELL != $Shell ]]; then
-          chsh -s ${Shell}
+        if [[ $SHELL != "$Shell" ]]; then
+          chsh -s "${Shell}"
         else
           echo ""
         fi
@@ -94,8 +114,8 @@ if [[ $choice == 1 ]]; then
         #make sure bash is installed
         checker bash
         Shell=$(which bash)
-        if [[ $SHELL != $Shell ]]; then
-          chsh -s ${Shell}
+        if [[ $SHELL != "$Shell" ]]; then
+          chsh -s "${Shell}"
         else
           echo ""
         fi
@@ -117,8 +137,8 @@ elif [[ $choice == 2 ]]; then
         #check if zsh is installed and make default shell
         checker zsh
         Shell=$(which zsh)
-        if [[ $SHELL != $Shell ]]; then
-          chsh -s ${Shell}
+        if [[ $SHELL != "$Shell" ]]; then
+          chsh -s "${Shell}"
         else
           echo ""
         fi
@@ -136,8 +156,8 @@ elif [[ $choice == 2 ]]; then
         #make sure bash is installed 
         checker bash
         Shell=$(which bash)
-        if [[ $SHELL != $Shell ]]; then
-          chsh -s ${Shell}
+        if [[ $SHELL != "$Shell" ]]; then
+          chsh -s "${Shell}"
         else
           echo ""
         fi
