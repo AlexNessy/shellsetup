@@ -26,7 +26,7 @@ else
   echo "This package manager is not supported yet"
 fi
 #add aliases here followed by \n
-alias=("alias nv='nvim'" "\nalias sp='sudo pacman'" "\nalias chx='chmod +x'" "\nalias gitc='git add .; git commit -m 'New Additions'; git push'")
+alias=("alias nv='nvim'" "\nalias sp='sudo pacman'" "\nalias chx='chmod +x'")
 echo "Welcome to..."
 echo -e " ${GREEN}
          __         ____          __            
