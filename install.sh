@@ -175,4 +175,4 @@ elif [[ $choice == 2 ]]; then
         echo "changes made and applied! you can now restart your terminal"
     fi
 fi
-#test
+
