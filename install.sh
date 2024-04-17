@@ -19,7 +19,9 @@ elif [[ $pacmanCode == 0 ]]; then
     sudo pacman -S --noconfirm --needed "$1"
   }
 elif [[ $aptCode == 0 ]]; then
+  function checker(){
   sudo apt -y install "$1"
+}
 else
   echo "This package manager is not supported yet"
 fi
