@@ -27,12 +27,14 @@ elif [[ $aptCode == 0 ]]; then
 else
   echo "Your package manager is not supported yet"
 fi
+#temporary fix for 'New Changes' in git commit message
+newChanges='"New Changes"'
 #add aliases here followed by \n
 alias=(
   "alias nv='nvim'" 
   "\nalias sp='sudo pacman'" 
   "\nalias chx='chmod +x'" 
-  "\nalias gitc='git add .; git commit -m 'New Changes'; git push'"
+  "\nalias gitc='git add .; git commit -m $newChanges; git push'"
   "\nalias rsync-copy='rsync -avzPh'" 
   "\nalias rsync-move='rsync -avzPh --remove-source-files'" 
   "\nalias rsync-update='rsync -avzuPh'" 
