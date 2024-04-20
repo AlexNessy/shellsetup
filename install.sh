@@ -26,7 +26,16 @@ else
   echo "This package manager is not supported yet"
 fi
 #add aliases here followed by \n
-alias=("alias nv='nvim'" "\nalias sp='sudo pacman'" "\nalias chx='chmod +x'")
+alias=(
+  "alias nv='nvim'" 
+  "\nalias sp='sudo pacman'" 
+  "\nalias chx='chmod +x'" 
+  "\nalias rsync-copy='rsync -avzPh" 
+  "\nalias rsync-move='rsync -avzPh --remove-source-files" 
+  "\nalias rsync-update='rsync -avzuPh'" 
+  "\nalias rsync-synchronize='rsync -avzuPh --delete'"
+  "\nalias i='sudo pacman -S'"
+)
 echo "Welcome to..."
 echo -e " ${GREEN}
          __         ____          __            
@@ -99,8 +108,10 @@ if [[ $choice == 1 ]]; then
         git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/.oh-my-zsh/custom/themes/powerlevel10k
         git clone https://github.com/agkozak/zsh-z ~/.oh-my-zsh/custom/plugins/zsh-z
         git clone --depth 1 https://github.com/unixorn/fzf-zsh-plugin.git ~/.oh-my-zsh/custom/plugins/fzf-zsh-plugin
+        git clone https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/gh ~/.oh-my-zsh/custom/plugins/gh
+        git clone https://github.com/zshzoo/magic-enter ~/.oh-my-zsh/custom/plugins/magic-enter
         #plugins integration
-        sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions zsh-syntax-highlighting zsh-z fzf)/g' ~/.zshrc
+        sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions zsh-syntax-highlighting zsh-z fzf gh magic-enter)/g' ~/.zshrc
         sed -i 's@robbyrussell@powerlevel10k/powerlevel10k@g' ~/.zshrc
         #aliases add
         grep -q 'alias sp=' ~/.zshrc
