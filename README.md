@@ -4,6 +4,7 @@
 - [x] Setting up aliases  
 - [x] ohmyzsh setup  
 - [x] ohmybash setup  
+- [x] Package manager chooser  
 
 ## TO DO:  
-- [ ] Package manager chooser  
+
