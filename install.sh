@@ -3,6 +3,8 @@ GREEN='\033[0;32m'
 NC='\033[0m'
 #current dir
 currentDir=$(pwd)
+#while loop
+Menu=1
 #install function
 which dnf
 dnfCode=$?
@@ -23,13 +25,14 @@ elif [[ $aptCode == 0 ]]; then
   sudo apt -y install "$1"
 }
 else
-  echo "This package manager is not supported yet"
+  echo "Your package manager is not supported yet"
 fi
 #add aliases here followed by \n
 alias=(
   "alias nv='nvim'" 
   "\nalias sp='sudo pacman'" 
   "\nalias chx='chmod +x'" 
+  "\nalias gitc='git add .; git commit -m 'New Changes'; git push"
   "\nalias rsync-copy='rsync -avzPh" 
   "\nalias rsync-move='rsync -avzPh --remove-source-files" 
   "\nalias rsync-update='rsync -avzuPh'" 
@@ -44,13 +47,21 @@ echo -e " ${GREEN}
  (__  ) / / /  __/ / (__  )  __/ /_/ /_/ / /_/ / 
 /____/_/ /_/\___/_/_/____/\___/\__/\__,_/ .___/  
                                        /_/      ${NC}"
-echo ""
-echo -e "Do you want:\n(1) Full setup \n(2) Light setup"
-read -r choice
-if [[ $choice != 1 ]] && [[ $choice != 2 ]]; then
-    exit
-fi
+while [[ $Menu == 1 ]]; do
+  echo ""
+  echo -e "Do you want:\n(1) Full setup \n(2) Light setup \n(3) More info"
+  read -r choice
+  if [[ $choice != 1 ]] && [[ $choice != 2 ]] && [[ $choice != 3 ]]; then
+      exit
+  elif [[ $choice == 3 ]]; then
+    echo -e "The full setup consists of all customisation options including setting the chosen shell as default, aliases, oh my (shell) installation and plugins. \nThe light setup consists of only setting the default shell without aliases and other features."
+  elif [[ $choice == 1 ]] || [[ $choice == 2 ]]; then
+    Menu=0
+  fi
+done
 #install packages
+checker github-cli
+checker gh
 checker cmatrix
 checker neofetch
 checker btop
@@ -102,13 +113,14 @@ if [[ $choice == 1 ]]; then
         fi
         #ohmyzsh installation
         wget https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh -O - | sed s/RUNZSH:-yes/RUNZSH:-no/g | sh
+        #directory installation
         #plugins installation
         git clone https://github.com/zsh-users/zsh-autosuggestions ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions 
         git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting 
         git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/.oh-my-zsh/custom/themes/powerlevel10k
         git clone https://github.com/agkozak/zsh-z ~/.oh-my-zsh/custom/plugins/zsh-z
         git clone --depth 1 https://github.com/unixorn/fzf-zsh-plugin.git ~/.oh-my-zsh/custom/plugins/fzf-zsh-plugin
-        git clone https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/gh ~/.oh-my-zsh/custom/plugins/gh
+        git clone https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/gh ~/.oh-my-zsh/plugins/gh
         git clone https://github.com/zshzoo/magic-enter ~/.oh-my-zsh/custom/plugins/magic-enter
         #plugins integration
         sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions zsh-syntax-highlighting zsh-z fzf gh magic-enter)/g' ~/.zshrc
