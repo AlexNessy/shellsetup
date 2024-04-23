@@ -58,6 +58,13 @@ while [[ $Menu == 1 ]]; do
   elif [[ $choice == 3 ]]; then
     echo -e "The full setup consists of all customisation options including setting the chosen shell as default, aliases, oh my (shell) installation and plugins. \nThe light setup consists of only setting the default shell without aliases and other features."
   elif [[ $choice == 1 ]] || [[ $choice == 2 ]]; then
+    echo -e "What shell do you want to use? \n(1) zsh \n(2) bash \n(3) skip shell config"
+    read -r shell
+    if [[ $shell != 1 ]] && [[ $shell != 2 ]] && [[ $shell != 3 ]]; then
+      exit
+    else
+      :
+    fi
     Menu=0
   fi
 done
@@ -79,7 +86,7 @@ if [[ $pacmanCode == 0 ]]; then
   which yay
   exitCode=$?
   if [[ $exitCode == 0 ]]; then
-    echo ""
+    :
   else
     sudo pacman -S --needed --noconfirm base-devel git
     git clone https://aur.archlinux.org/yay.git
@@ -90,7 +97,7 @@ if [[ $pacmanCode == 0 ]]; then
     cd "$currentDir" || exit
   fi
 else
-  echo ""
+  :
 fi
 wget "https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS NF Regular.ttf"
 mkdir ~/.local/share/fonts
@@ -98,8 +105,6 @@ mv 'MesloLGS NF Regular.ttf' ~/.local/share/fonts
 echo ""
 echo "All packages installed"
 echo ""
-echo -e "What shell do you want to use? \n(1) zsh \n(2) bash \n(3) skip shell config"
-read -r shell
 if [[ $shell != 1 ]] && [[ $shell != 2 ]]; then
     exit
 fi
@@ -111,7 +116,7 @@ if [[ $choice == 1 ]]; then
         if [[ $SHELL != "$Shell" ]]; then
           chsh -s "${Shell}"
         else
-          echo ""
+          :
         fi
         #ohmyzsh installation
         wget https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh -O - | sed s/RUNZSH:-yes/RUNZSH:-no/g | sh
@@ -131,7 +136,7 @@ if [[ $choice == 1 ]]; then
         grep -q 'alias sp=' ~/.zshrc
         exitCode=$?
         if [ $exitCode == 0 ]; then
-            echo ""
+          :
         else
             echo -e "${alias[@]}" >> ~/.zshrc
         fi
