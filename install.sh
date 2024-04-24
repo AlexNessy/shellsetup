@@ -39,7 +39,6 @@ alias=(
   "\nalias rsync-move='rsync -avzPh --remove-source-files'" 
   "\nalias rsync-update='rsync -avzuPh'" 
   "\nalias rsync-synchronize='rsync -avzuPh --delete'"
-  "\nalias i='sudo pacman -S'"
 )
 echo "Welcome to..."
 echo -e " ${GREEN}
