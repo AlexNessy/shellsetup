@@ -81,6 +81,7 @@ checker bat
 checker smbclient
 checker tldr
 checker fzf
+checker wget
 if [[ $pacmanCode == 0 ]]; then
   which yay
   exitCode=$?
