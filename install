@@ -1,16 +1,47 @@
 #!/bin/bash 
+clear
+#colours for shellsetup logo
 GREEN='\033[0;32m'
 NC='\033[0m'
 #current dir
 currentDir=$(pwd)
 #while loop
 Menu=1
-#install function
-which dnf
+#package list for -p flag
+packageList=(
+"github-cli\n"
+"gh\n"
+"cmatrix\n"
+"neofetch\n"
+"btop\n"
+"git\n"
+"neovim\n"
+"fastfetch\n"
+"zsh\n"
+"bat\n"
+"smbclient\n"
+"tldr\n"
+"fzf\n"
+"wget\n"
+)
+#print usage
+print_usage() {
+  echo "Usage: -p - list packages"
+}
+#flags
+while getopts 'p' flag; do
+  case "${flag}" in
+    p) echo -e "${packageList[@]}"; exit;;
+    *) print_usage
+    exit 1 ;;
+  esac
+done
+#check package manager and set install function
+which dnf > /dev/null
 dnfCode=$?
-which pacman
+which pacman > /dev/null
 pacmanCode=$?
-which apt
+which apt > /dev/null
 aptCode=$?
 if [[ $dnfCode == 0 ]]; then
   function checker(){
@@ -26,10 +57,9 @@ elif [[ $aptCode == 0 ]]; then
 }
 else
   echo "Your package manager is not supported yet"
+  exit
 fi
-#temporary fix for 'New Changes' in git commit message
-newChanges='"New Changes"'
-#add aliases here followed by \n
+
 alias=(
   "alias nv='nvim'" 
   "\nalias sp='sudo pacman'" 
@@ -40,6 +70,27 @@ alias=(
   "\nalias rsync-update='rsync -avzuPh'" 
   "\nalias rsync-synchronize='rsync -avzuPh --delete'"
 )
+
+#alias function
+function aliases(){
+  echo -e "Any aliases you want to add?\n (1) Yes\n (2) No\n (3) List Current Aliases"
+  read -r aliasChoice
+  [ "$aliasChoice" == "1" ] &&
+    echo "Name of alias: "
+    read -r aliasName
+    echo "Alias Command: "
+    read -r aliasCmd
+    echo -e "\nalias $aliasName='$aliasCmd'" >> "$1"
+  [ "$aliasChoice" == "2" ] && 
+    :
+  [ "$aliasChoice" == "3" ] && 
+    echo "${alias[@]}"
+
+}
+
+#temporary fix for 'New Changes' in git commit message
+newChanges='"New Changes"'
+#add aliases here followed by \n
 echo "Welcome to..."
 echo -e " ${GREEN}
          __         ____          __            
@@ -49,13 +100,13 @@ echo -e " ${GREEN}
 /____/_/ /_/\___/_/_/____/\___/\__/\__,_/ .___/  
                                        /_/      ${NC}"
 while [[ $Menu == 1 ]]; do
-  echo ""
+  :
   echo -e "Do you want:\n(1) Full setup \n(2) Light setup \n(3) More info"
   read -r choice
   if [[ $choice != 1 ]] && [[ $choice != 2 ]] && [[ $choice != 3 ]]; then
       exit
   elif [[ $choice == 3 ]]; then
-    echo -e "The full setup consists of all customisation options including setting the chosen shell as default, aliases, oh my (shell) installation and plugins. \nThe light setup consists of only setting the default shell without aliases and other features."
+    echo -e "The full setup consists of all customisation options including setting the chosen shell as default, aliases, oh my (shell) installation and plugins. \nThe light setup consists of only setting the default shell without aliases and other features. To list packages, run with -p flag."
   elif [[ $choice == 1 ]] || [[ $choice == 2 ]]; then
     echo -e "What shell do you want to use? \n(1) zsh \n(2) bash \n(3) skip shell config"
     read -r shell
@@ -81,10 +132,11 @@ checker bat
 checker smbclient
 checker tldr
 checker fzf
+checker wget
 if [[ $pacmanCode == 0 ]]; then
   which yay
-  exitCode=$?
-  if [[ $exitCode == 0 ]]; then
+  grepCode=$?
+  if [[ $grepCode == 0 ]]; then
     :
   else
     sudo pacman -S --needed --noconfirm base-devel git
@@ -101,9 +153,9 @@ fi
 wget "https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS NF Regular.ttf"
 mkdir ~/.local/share/fonts
 mv 'MesloLGS NF Regular.ttf' ~/.local/share/fonts
-echo ""
+:
 echo "All packages installed"
-echo ""
+:
 if [[ $shell != 1 ]] && [[ $shell != 2 ]]; then
     exit
 fi
@@ -133,11 +185,12 @@ if [[ $choice == 1 ]]; then
         sed -i 's@robbyrussell@powerlevel10k/powerlevel10k@g' ~/.zshrc
         #aliases add
         grep -q 'alias sp=' ~/.zshrc
-        exitCode=$?
-        if [ $exitCode == 0 ]; then
+        grepCode=$?
+        if [ $grepCode == 0 ]; then
           :
         else
             echo -e "${alias[@]}" >> ~/.zshrc
+            aliases ~/.zshrc
         fi
         /bin/zsh -c 'source ~/.zshrc'
         echo "changes made and applied! you can now restart your terminal for p10k configuration. make sure to change your font to MesloLGS in your console settings."
@@ -148,17 +201,18 @@ if [[ $choice == 1 ]]; then
         if [[ $SHELL != "$Shell" ]]; then
           chsh -s "${Shell}"
         else
-          echo ""
+          :
         fi
         #ohmybash installation
         bash -c "$(wget https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh -O -)" --unattended
         #aliases add
         grep -q 'alias sp=' ~/.bashrc
-        exitCode=$?
-        if [ $exitCode == 0 ]; then
-            echo ""
+        grepCode=$?
+        if [ $grepCode == 0 ]; then
+            :
         else
             echo -e "${alias[@]}" >> ~/.bashrc
+            aliases ~/.bashrc
         fi
         source ~/.bashrc
         echo "changes made and applied! you can now restart your terminal"
@@ -171,15 +225,16 @@ elif [[ $choice == 2 ]]; then
         if [[ $SHELL != "$Shell" ]]; then
           chsh -s "${Shell}"
         else
-          echo ""
+          :
         fi
         #aliases add
         grep -q 'alias sp=' ~/.zshrc
-        exitCode=$?
-        if [ $exitCode == 0 ]; then
-            echo ""
+        grepCode=$?
+        if [ $grepCode == 0 ]; then
+            :
         else
             echo -e "${alias[@]}" >> ~/.zshrc
+            aliases ~/.zshrc
         fi
         /bin/zsh -c 'source ~/.zshrc'
         echo "changes made and applied! you can now restart your terminal"
@@ -190,15 +245,16 @@ elif [[ $choice == 2 ]]; then
         if [[ $SHELL != "$Shell" ]]; then
           chsh -s "${Shell}"
         else
-          echo ""
+          :
         fi
         #aliases add
         grep -q 'alias sp=' ~/.bashrc
-        exitCode=$?
-        if [ $exitCode == 0 ]; then
-            echo ""
+        grepCode=$?
+        if [ $grepCode == 0 ]; then
+            :
         else
             echo -e "${alias[@]}" >> ~/.bashrc
+            aliases ~/.bashrc
         fi
         source ~/.bashrc
         echo "changes made and applied! you can now restart your terminal"
