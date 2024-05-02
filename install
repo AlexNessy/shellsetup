@@ -37,11 +37,11 @@ while getopts 'p' flag; do
   esac
 done
 #check package manager and set install function
-which dnf > /dev/null
+which dnf > /dev/null 2>&1
 dnfCode=$?
-which pacman > /dev/null
+which pacman > /dev/null 2>&1
 pacmanCode=$?
-which apt > /dev/null
+which apt > /dev/null 2>&1
 aptCode=$?
 if [[ $dnfCode == 0 ]]; then
   function checker(){
