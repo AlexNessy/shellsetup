@@ -170,7 +170,7 @@ if [[ $choice == 1 ]]; then
           :
         fi
         #ohmyzsh installation
-        wget https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh -O - | sed s/RUNZSH:-yes/RUNZSH:-no/g | sh
+        wget https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh -O - | sed s/RUNZSH:-yes/RUNZSH:-no/g | sh > /dev/null 2>&1
         #directory installation
         #plugins installation
         git clone https://github.com/zsh-users/zsh-autosuggestions ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions 
@@ -193,6 +193,7 @@ if [[ $choice == 1 ]]; then
             aliases ~/.zshrc
         fi
         /bin/zsh -c 'source ~/.zshrc'
+        clear
         echo "changes made and applied! you can now restart your terminal for p10k configuration. make sure to change your font to MesloLGS in your console settings."
     else
         #make sure bash is installed
@@ -215,6 +216,7 @@ if [[ $choice == 1 ]]; then
             aliases ~/.bashrc
         fi
         source ~/.bashrc
+        clear
         echo "changes made and applied! you can now restart your terminal"
     fi
 elif [[ $choice == 2 ]]; then
@@ -237,6 +239,7 @@ elif [[ $choice == 2 ]]; then
             aliases ~/.zshrc
         fi
         /bin/zsh -c 'source ~/.zshrc'
+        clear
         echo "changes made and applied! you can now restart your terminal"
     else
         #make sure bash is installed 
@@ -257,6 +260,7 @@ elif [[ $choice == 2 ]]; then
             aliases ~/.bashrc
         fi
         source ~/.bashrc
+        clear
         echo "changes made and applied! you can now restart your terminal"
     fi
 fi
