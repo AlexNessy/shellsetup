@@ -4,7 +4,7 @@ clear
 GREEN='\033[0;32m'
 NC='\033[0m'
 #current dir
-currentDir=$(pwd)
+currentDir=$PWD
 #while loop
 Menu=1
 AliasMenu=1
@@ -31,7 +31,7 @@ print_usage() {
 }
 #flags
 while getopts 'p' flag; do
-  case "${flag}" in
+  case "$flag" in
     p) echo -e "${packageList[@]}"; exit;;
     *) print_usage
     exit 1 ;;
@@ -94,7 +94,7 @@ function aliases(){
     elif [[ "$aliasChoice" == "2" ]]; then
       AliasMenu=0
     elif [[ "$aliasChoice" == "3" ]]; then
-      grep "^alias.*" $1
+      grep "^alias.*" "$1"
     fi
   done
 
@@ -177,7 +177,7 @@ if [[ $choice == 1 ]]; then
         checker zsh
         Shell=$(which zsh)
         if [[ $SHELL != "$Shell" ]]; then
-          chsh -s "${Shell}"
+          chsh -s "$Shell"
         else
           :
         fi
@@ -198,7 +198,7 @@ if [[ $choice == 1 ]]; then
         #aliases add
         grep -q 'alias sp=' ~/.zshrc
         grepCode=$?
-        if [ $grepCode == 0 ]; then
+        if [ "$grepCode" == 0 ]; then
           :
         else
             echo -e "${alias[@]}" >> ~/.zshrc
@@ -213,7 +213,7 @@ if [[ $choice == 1 ]]; then
         checker bash
         Shell=$(which bash)
         if [[ $SHELL != "$Shell" ]]; then
-          chsh -s "${Shell}"
+          chsh -s "$Shell"
         else
           :
         fi
@@ -222,7 +222,7 @@ if [[ $choice == 1 ]]; then
         #aliases add
         grep -q 'alias sp=' ~/.bashrc
         grepCode=$?
-        if [ $grepCode == 0 ]; then
+        if [ "$grepCode" == 0 ]; then
             :
         else
             echo -e "${alias[@]}" >> ~/.bashrc
@@ -238,14 +238,14 @@ elif [[ $choice == 2 ]]; then
         checker zsh
         Shell=$(which zsh)
         if [[ $SHELL != "$Shell" ]]; then
-          chsh -s "${Shell}"
+          chsh -s "$Shell"
         else
           :
         fi
         #aliases add
         grep -q 'alias sp=' ~/.zshrc
         grepCode=$?
-        if [ $grepCode == 0 ]; then
+        if [ "$grepCode" == 0 ]; then
             :
         else
             echo -e "${alias[@]}" >> ~/.zshrc
@@ -259,14 +259,14 @@ elif [[ $choice == 2 ]]; then
         checker bash
         Shell=$(which bash)
         if [[ $SHELL != "$Shell" ]]; then
-          chsh -s "${Shell}"
+          chsh -s "$Shell"
         else
           :
         fi
         #aliases add
         grep -q 'alias sp=' ~/.bashrc
         grepCode=$?
-        if [ $grepCode == 0 ]; then
+        if [ "$grepCode" == 0 ]; then
             :
         else
             echo -e "${alias[@]}" >> ~/.bashrc
@@ -276,5 +276,17 @@ elif [[ $choice == 2 ]]; then
         clear
         echo "changes made and applied! you can now restart your terminal"
     fi
+fi
+
+clear
+echo -e "Do you want nvim config too? (Current config will be backed up)\n (1) Yes (2) No"
+read -r nvimconfig
+if [[ $nvimconfig == 1 ]]; then
+  random=$RANDOM
+  ls ~/.config|grep "nvim" && rsync -avPh ~/.config/nvim/ ~/.config/nvim."$random".bak && rm -rf ~/.config/nvim
+  git clone https://github.com/alexnessy/nvim-config
+  cp -r nvim-config/nvim ~/.config/
+elif [[ $nvimconfig == 2 ]]; then
+  :
 fi
 
