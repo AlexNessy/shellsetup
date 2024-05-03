@@ -7,6 +7,7 @@ NC='\033[0m'
 currentDir=$(pwd)
 #while loop
 Menu=1
+AliasMenu=1
 #package list for -p flag
 packageList=(
 "github-cli\n"
@@ -73,18 +74,29 @@ alias=(
 
 #alias function
 function aliases(){
-  echo -e "Any aliases you want to add?\n (1) Yes\n (2) No\n (3) List Current Aliases"
-  read -r aliasChoice
-  [ "$aliasChoice" == "1" ] &&
-    echo "Name of alias: "
-    read -r aliasName
-    echo "Alias Command: "
-    read -r aliasCmd
-    echo -e "\nalias $aliasName='$aliasCmd'" >> "$1"
-  [ "$aliasChoice" == "2" ] && 
-    :
-  [ "$aliasChoice" == "3" ] && 
-    echo "${alias[@]}"
+  clear
+  while [[ $AliasMenu = 1 ]]; do
+    echo -e "Any aliases you want to add?\n (1) Yes\n (2) No\n (3) List Current Aliases"
+    read -r aliasChoice
+    if [[ "$aliasChoice" == "1" ]]; then
+      echo "Alias Command:"
+      read -r aliasCmd
+      echo "What alias do you want to use for this command?:"
+      read -r aliasName
+      echo -e "\nalias $aliasName='$aliasCmd'" >> "$1"
+      echo -e "Do you want to add another alias?\n (1) Yes\n (2) No"
+      read -r aliasMenuChoice
+      if [[ $aliasMenuChoice == 1 ]]; then 
+        :
+      elif [[ $aliasMenuChoice == 2 ]]; then
+        AliasMenu=0
+      fi
+    elif [[ "$aliasChoice" == "2" ]]; then
+      AliasMenu=0
+    elif [[ "$aliasChoice" == "3" ]]; then
+      grep "^alias.*" $1
+    fi
+  done
 
 }
 
@@ -192,6 +204,7 @@ if [[ $choice == 1 ]]; then
             echo -e "${alias[@]}" >> ~/.zshrc
             aliases ~/.zshrc
         fi
+        aliases ~/.zshrc
         /bin/zsh -c 'source ~/.zshrc'
         clear
         echo "changes made and applied! you can now restart your terminal for p10k configuration. make sure to change your font to MesloLGS in your console settings."
