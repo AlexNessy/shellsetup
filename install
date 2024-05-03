@@ -286,6 +286,7 @@ if [[ $nvimconfig == 1 ]]; then
   ls ~/.config|grep "nvim" && rsync -avPh ~/.config/nvim/ ~/.config/nvim."$random".bak && rm -rf ~/.config/nvim
   git clone https://github.com/alexnessy/nvim-config
   cp -r nvim-config/nvim ~/.config/
+  rm -rf nvim-config
 elif [[ $nvimconfig == 2 ]]; then
   :
 fi
