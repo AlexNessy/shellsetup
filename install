@@ -79,11 +79,11 @@ function aliases(){
     echo -e "Any aliases you want to add?\n (1) Yes\n (2) No\n (3) List Current Aliases"
     read -r aliasChoice
     if [[ "$aliasChoice" == "1" ]]; then
-      echo "Alias Command:"
+      echo "Alias Command (use '' instead of double quotes if you need to):"
       read -r aliasCmd
       echo "What alias do you want to use for this command?:"
       read -r aliasName
-      echo -e "\nalias $aliasName='$aliasCmd'" >> "$1"
+      echo -e "alias $aliasName=""$aliasCmd""" >> "$1"
       echo -e "Do you want to add another alias?\n (1) Yes\n (2) No"
       read -r aliasMenuChoice
       if [[ $aliasMenuChoice == 1 ]]; then 
