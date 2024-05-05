@@ -278,7 +278,7 @@ elif [[ $choice == 2 ]]; then
 fi
 
 clear
-echo -e "Do you want nvim config too? (Current config will be backed up)\n (1) Yes (2) No"
+echo -e "Do you want nvim config too? (Current config will be backed up)\n (1) Yes\n (2) No"
 read -r nvimconfig
 if [[ $nvimconfig == 1 ]]; then
   random=$RANDOM
