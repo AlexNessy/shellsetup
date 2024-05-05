@@ -202,7 +202,6 @@ if [[ $choice == 1 ]]; then
           :
         else
             echo -e "${alias[@]}" >> ~/.zshrc
-            aliases ~/.zshrc
         fi
         aliases ~/.zshrc
         /bin/zsh -c 'source ~/.zshrc'
