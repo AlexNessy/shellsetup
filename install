@@ -8,7 +8,7 @@ currentDir=$PWD
 #while loop
 Menu=1
 AliasMenu=1
-#package list for -p flag
+# used for -p flag and what packages to install
 packageList=(
 "github-cli"
 "gh"
