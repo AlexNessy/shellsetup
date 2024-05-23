@@ -10,20 +10,20 @@ Menu=1
 AliasMenu=1
 #package list for -p flag
 packageList=(
-"github-cli\n"
-"gh\n"
-"cmatrix\n"
-"neofetch\n"
-"btop\n"
-"git\n"
-"neovim\n"
-"fastfetch\n"
-"zsh\n"
-"bat\n"
-"smbclient\n"
-"tldr\n"
-"fzf\n"
-"wget\n"
+"github-cli"
+"gh"
+"cmatrix"
+"neofetch"
+"btop"
+"git"
+"neovim"
+"fastfetch"
+"zsh"
+"bat"
+"smbclient"
+"tldr"
+"fzf"
+"wget"
 )
 #print usage
 print_usage() {
@@ -55,11 +55,53 @@ elif [[ $pacmanCode == 0 ]]; then
 elif [[ $aptCode == 0 ]]; then
   function checker(){
   sudo apt -y install "$1"
-}
+  }
 else
   echo "Your package manager is not supported yet"
   exit
 fi
+
+# 1st input for shell, 2nd input for type of config
+function shellInstall(){
+  checker $1
+  Shell=$(which $1)
+  if [[ $SHELL != "$Shell" ]]; then
+    chsh -s "$Shell"
+  else
+    :
+  fi
+  if [[ $2 = "full" ]]; then
+    if [[ $1 == "zsh" ]]; then
+      #ohmyzsh installation
+      wget https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh -O - | sed s/RUNZSH:-yes/RUNZSH:-no/g | sh > /dev/null 2>&1
+      #directory installation
+      #plugins installation
+      git clone https://github.com/zsh-users/zsh-autosuggestions ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions 
+      git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting 
+      git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/.oh-my-zsh/custom/themes/powerlevel10k
+      git clone https://github.com/agkozak/zsh-z ~/.oh-my-zsh/custom/plugins/zsh-z
+      git clone --depth 1 https://github.com/unixorn/fzf-zsh-plugin.git ~/.oh-my-zsh/custom/plugins/fzf-zsh-plugin
+      git clone https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/gh ~/.oh-my-zsh/plugins/gh
+      git clone https://github.com/zshzoo/magic-enter ~/.oh-my-zsh/custom/plugins/magic-enter
+      #plugins integration
+      sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions zsh-syntax-highlighting zsh-z fzf gh magic-enter)/g' ~/.zshrc
+      sed -i 's@robbyrussell@powerlevel10k/powerlevel10k@g' ~/.zshrc
+    elif [[ $1 == "bash" ]]; then
+      #ohmybash installation
+      bash -c "$(wget https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh -O -)" --unattended
+    fi
+  fi
+  #aliases add
+  grep -q 'alias sp=' ~/.$1rc
+  grepCode=$?
+  if [ "$grepCode" != 0 ]; then
+      echo -e "${alias[@]}" >> ~/.$1rc
+      aliases ~/.$1rc
+  fi
+  /bin/$1 -c 'source ~/.$1rc'
+  clear
+  echo "changes made and applied! you can now restart your terminal"
+}
 
 alias=(
   "alias nv='nvim'" 
@@ -86,9 +128,7 @@ function aliases(){
       echo -e "alias $aliasName=$aliasCmd" >> "$1"
       echo -e "Do you want to add another alias?\n (1) Yes\n (2) No"
       read -r aliasMenuChoice
-      if [[ $aliasMenuChoice == 1 ]]; then 
-        :
-      elif [[ $aliasMenuChoice == 2 ]]; then
+      if [[ $aliasMenuChoice == 2 ]]; then
         AliasMenu=0
       fi
     elif [[ "$aliasChoice" == "2" ]]; then
@@ -130,150 +170,52 @@ while [[ $Menu == 1 ]]; do
     Menu=0
   fi
 done
-#install packages
-checker github-cli
-checker gh
-checker cmatrix
-checker neofetch
-checker btop
-checker git
-checker neovim
-checker fastfetch
-checker zsh
-checker bat
-checker smbclient
-checker tldr
-checker fzf
-checker wget
+# install packages
+for i in "${packageList[@]}"
+do
+  checker $i
+done
+
+# install yay (change for paru later)
 if [[ $pacmanCode == 0 ]]; then
   which yay
   grepCode=$?
-  if [[ $grepCode == 0 ]]; then
-    :
-  else
+  if [[ $grepCode =! 0 ]]; then
     sudo pacman -S --needed --noconfirm base-devel git
     git clone https://aur.archlinux.org/yay.git
     cd yay || exit
-  makepkg -si --noconfirm
+    makepkg -si --noconfirm
     cd ..
     rm -rf yay
     cd "$currentDir" || exit
   fi
-else
-  :
 fi
-wget "https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS NF Regular.ttf"
-mkdir ~/.local/share/fonts
-mv 'MesloLGS NF Regular.ttf' ~/.local/share/fonts
-:
+
+# add font to make sure it's available
+find -t file "MesloLGS" ~/.local/share/fonts
+findExitCode=$?
+if [[ $findExitCode =! 0 ]]; then
+  wget "https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS NF Regular.ttf"
+  mkdir -p ~/.local/share/fonts
+  mv 'MesloLGS NF Regular.ttf' ~/.local/share/fonts
+fi
+
 echo "All packages installed"
-:
+ 
 if [[ $shell != 1 ]] && [[ $shell != 2 ]]; then
     exit
 fi
 if [[ $choice == 1 ]]; then
     if [[ $shell == 1 ]]; then
-        #check if zsh is installed and make default shell
-        checker zsh
-        Shell=$(which zsh)
-        if [[ $SHELL != "$Shell" ]]; then
-          chsh -s "$Shell"
-        else
-          :
-        fi
-        #ohmyzsh installation
-        wget https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh -O - | sed s/RUNZSH:-yes/RUNZSH:-no/g | sh > /dev/null 2>&1
-        #directory installation
-        #plugins installation
-        git clone https://github.com/zsh-users/zsh-autosuggestions ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions 
-        git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting 
-        git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/.oh-my-zsh/custom/themes/powerlevel10k
-        git clone https://github.com/agkozak/zsh-z ~/.oh-my-zsh/custom/plugins/zsh-z
-        git clone --depth 1 https://github.com/unixorn/fzf-zsh-plugin.git ~/.oh-my-zsh/custom/plugins/fzf-zsh-plugin
-        git clone https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/gh ~/.oh-my-zsh/plugins/gh
-        git clone https://github.com/zshzoo/magic-enter ~/.oh-my-zsh/custom/plugins/magic-enter
-        #plugins integration
-        sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions zsh-syntax-highlighting zsh-z fzf gh magic-enter)/g' ~/.zshrc
-        sed -i 's@robbyrussell@powerlevel10k/powerlevel10k@g' ~/.zshrc
-        #aliases add
-        grep -q 'alias sp=' ~/.zshrc
-        grepCode=$?
-        if [ "$grepCode" == 0 ]; then
-          :
-        else
-            echo -e "${alias[@]}" >> ~/.zshrc
-        fi
-        aliases ~/.zshrc
-        /bin/zsh -c 'source ~/.zshrc'
-        clear
-        echo "changes made and applied! you can now restart your terminal for p10k configuration. make sure to change your font to MesloLGS in your console settings."
+      shellInstall zsh full
     else
-        #make sure bash is installed
-        checker bash
-        Shell=$(which bash)
-        if [[ $SHELL != "$Shell" ]]; then
-          chsh -s "$Shell"
-        else
-          :
-        fi
-        #ohmybash installation
-        bash -c "$(wget https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh -O -)" --unattended
-        #aliases add
-        grep -q 'alias sp=' ~/.bashrc
-        grepCode=$?
-        if [ "$grepCode" == 0 ]; then
-            :
-        else
-            echo -e "${alias[@]}" >> ~/.bashrc
-            aliases ~/.bashrc
-        fi
-        source ~/.bashrc
-        clear
-        echo "changes made and applied! you can now restart your terminal"
+      shellInstall bash full
     fi
 elif [[ $choice == 2 ]]; then
     if [[ $shell == 1 ]]; then
-        #check if zsh is installed and make default shell
-        checker zsh
-        Shell=$(which zsh)
-        if [[ $SHELL != "$Shell" ]]; then
-          chsh -s "$Shell"
-        else
-          :
-        fi
-        #aliases add
-        grep -q 'alias sp=' ~/.zshrc
-        grepCode=$?
-        if [ "$grepCode" == 0 ]; then
-            :
-        else
-            echo -e "${alias[@]}" >> ~/.zshrc
-            aliases ~/.zshrc
-        fi
-        /bin/zsh -c 'source ~/.zshrc'
-        clear
-        echo "changes made and applied! you can now restart your terminal"
+      shellInstall zsh lite
     else
-        #make sure bash is installed 
-        checker bash
-        Shell=$(which bash)
-        if [[ $SHELL != "$Shell" ]]; then
-          chsh -s "$Shell"
-        else
-          :
-        fi
-        #aliases add
-        grep -q 'alias sp=' ~/.bashrc
-        grepCode=$?
-        if [ "$grepCode" == 0 ]; then
-            :
-        else
-            echo -e "${alias[@]}" >> ~/.bashrc
-            aliases ~/.bashrc
-        fi
-        source ~/.bashrc
-        clear
-        echo "changes made and applied! you can now restart your terminal"
+      shellInstall bash lite
     fi
 fi
 
@@ -286,7 +228,7 @@ if [[ $nvimconfig == 1 ]]; then
   git clone https://github.com/alexnessy/nvim-config
   cp -r nvim-config/nvim ~/.config/
   rm -rf nvim-config
-elif [[ $nvimconfig == 2 ]]; then
-  :
 fi
+[[ $choice == 1 ]] && [[ $shell == 1 ]] && echo "All changes made! Restart terminal for configuration of cli. Make sure to change terminal font to MesloLGS NF." && exit
+echo "All changes made! Make sure to change terminal font to MesloLGS NF."
 
