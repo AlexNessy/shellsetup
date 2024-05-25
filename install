@@ -198,18 +198,18 @@ if [[ $pacmanCode == 0 ]]; then
 fi
 
 # add font to make sure it's available
-find ~/.local/share/fonts -type f -name "MesloLGS NF Regular\.ttf" 
-findCode=$?
-if [[ $findCode != 0 ]]; then
-  wget "https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS NF Regular.ttf"
-  mkdir -p ~/.local/share/fonts
-  mv 'MesloLGS NF Regular.ttf' ~/.local/share/fonts
+if [[ $shell == 1 ]] && [[ $choice == 1 ]]; then
+  find ~/.local/share/fonts -type f -name "MesloLGS NF Regular\.ttf" 
+  findCode=$?
+  if [[ $findCode != 0 ]]; then
+    wget "https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS NF Regular.ttf"
+    mkdir -p ~/.local/share/fonts
+    mv 'MesloLGS NF Regular.ttf' ~/.local/share/fonts
+  fi
 fi
 
 echo "All packages installed"
  
-[[ $shell != 1 ]] && [[ $shell != 2 ]] && exit
-
 if [[ $choice == 1 ]]; then
     if [[ $shell == 1 ]]; then
       shellInstall zsh full
@@ -224,9 +224,7 @@ elif [[ $choice == 2 ]]; then
     fi
 fi
 
-clear
-
 nvimconfig
 
 [[ $choice == 1 ]] && [[ $shell == 1 ]] && echo "All changes made! Restart terminal for configuration of CLI. Make sure to change terminal font to MesloLGS NF." && exit
-echo "All changes made! Make sure to change terminal font to MesloLGS NF."
+echo -e "All changes made.\nEnjoy!"
