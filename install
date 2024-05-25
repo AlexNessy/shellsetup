@@ -1,79 +1,93 @@
 #!/bin/bash 
-clear
-#colours for shellsetup logo
+# colours for shellsetup logo
 GREEN='\033[0;32m'
 NC='\033[0m'
+
 currentDir=$PWD
-#while loop
+
+# while loop vars
 Menu=1
 AliasMenu=1
-#package list for -p flag
+
+# package list for -p flag
 packageList=(
-"github-cli"
-"gh"
-"cmatrix"
-"neofetch"
-"btop"
-"git"
-"neovim"
-"fastfetch"
-"zsh"
-"bat"
-"smbclient"
-"tldr"
-"fzf"
-"wget"
+  "github-cli"
+  "gh"
+  "cmatrix"
+  "neofetch"
+  "btop"
+  "git"
+  "neovim"
+  "fastfetch"
+  "zsh"
+  "bat"
+  "smbclient"
+  "tldr"
+  "fzf"
+  "wget"
+  "fd"
+  "tmux"
 )
+
+alias=(
+  "alias nv='nvim'" 
+  "alias sp='sudo pacman'" 
+  "alias chx='chmod +x'" 
+  "alias gitc='git add .; git commit -m $newChanges; git push'"
+  "alias rsync-copy='rsync -avzPh'" 
+  "alias rsync-move='rsync -avzPh --remove-source-files'" 
+  "alias rsync-update='rsync -avzuPh'" 
+  "alias rsync-synchronize='rsync -avzuPh --delete'"
+)
+
 print_usage() {
   echo "Usage: -p - list packages"
 }
-#flags
+
+# used for -p flag
+printPackages(){
+  for i in "${packageList[@]}"
+  do
+    echo "$i"
+  done
+}
+
+# flags
 while getopts 'p' flag; do
   case "$flag" in
-    p) echo -e "${packageList[@]}"; exit;;
+    p) printPackages; exit;;
     *) print_usage
     exit 1 ;;
   esac
 done
-#check package manager and set install function
-which dnf > /dev/null 2>&1
-dnfCode=$?
-which pacman > /dev/null 2>&1
-pacmanCode=$?
-which apt > /dev/null 2>&1
-aptCode=$?
-if [[ $dnfCode == 0 ]]; then
-  function checker(){
-    sudo dnf -y install "$1"
-  }
-elif [[ $pacmanCode == 0 ]]; then
-  function checker(){
-    sudo pacman -S --noconfirm --needed "$1"
-  }
-elif [[ $aptCode == 0 ]]; then
-  function checker(){
-  sudo apt -y install "$1"
-  }
-else
-  echo "Your package manager is not supported yet"
-  exit
-fi
+# check package manager and set install function
+whichPM(){
+  which "$1" > /dev/null 2>&1
+  export "$1Code=$?"
+}
+
+whichPM dnf
+whichPM pacman
+whichPM apt
+
+[[ $dnfCode == 0 ]] && checker() { sudo dnf -y install "$1"; } && checkerVar=1
+[[ $pacmanCode == 0 ]] && checker(){ sudo pacman -S --noconfirm --needed "$1"; } && checkerVar=1
+[[ $aptCode == 0 ]] && checker(){ sudo apt -y install "$1"; } && checkerVar=1
+  
+[[ -z $checkerVar ]] && echo "Your package manager is not supported yet"
 
 # 1st input for shell, 2nd input for type of config
-function shellInstall(){
-  checker $1
-  Shell=$(which $1)
+shellInstall(){
+  checker "$1"
+  Shell=$(which "$1")
   if [[ $SHELL != "$Shell" ]]; then
     chsh -s "$Shell"
-  else
-    :
   fi
   if [[ $2 = "full" ]]; then
     if [[ $1 == "zsh" ]]; then
-      #ohmyzsh installation
+      # ohmyzsh installation
       wget https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh -O - | sed s/RUNZSH:-yes/RUNZSH:-no/g | sh > /dev/null 2>&1
-      #directory installation
-      #plugins installation
+      # plugins installation
       git clone https://github.com/zsh-users/zsh-autosuggestions ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions 
       git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting 
       git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/.oh-my-zsh/custom/themes/powerlevel10k
@@ -81,39 +95,27 @@ function shellInstall(){
       git clone --depth 1 https://github.com/unixorn/fzf-zsh-plugin.git ~/.oh-my-zsh/custom/plugins/fzf-zsh-plugin
       git clone https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/gh ~/.oh-my-zsh/plugins/gh
       git clone https://github.com/zshzoo/magic-enter ~/.oh-my-zsh/custom/plugins/magic-enter
-      #plugins integration
+      # plugins integration
       sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions zsh-syntax-highlighting zsh-z fzf gh magic-enter colored-man-pages)/g' ~/.zshrc
       sed -i 's@robbyrussell@powerlevel10k/powerlevel10k@g' ~/.zshrc
     elif [[ $1 == "bash" ]]; then
-      #ohmybash installation
+      # ohmybash installation
       bash -c "$(wget https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh -O -)" --unattended
     fi
   fi
-  #aliases add
-  grep -q 'alias sp=' ~/.$1rc
+  # aliases add
+  grep -q 'alias sp=' ~/."$1"rc
   grepCode=$?
   if [ "$grepCode" != 0 ]; then
-      echo -e "${alias[@]}" >> ~/.$1rc
-      aliases ~/.$1rc
+      echo -e "${alias[@]}" >> ~/."$1"rc
+      aliases ~/."$1"rc
   fi
-  /bin/$1 -c 'source ~/.$1rc'
+  /bin/"$1" -c "source ~/.$1rc"
   clear
   echo "changes made and applied! you can now restart your terminal"
 }
 
-alias=(
-  "alias nv='nvim'" 
-  "\nalias sp='sudo pacman'" 
-  "\nalias chx='chmod +x'" 
-  "\nalias gitc='git add .; git commit -m $newChanges; git push'"
-  "\nalias rsync-copy='rsync -avzPh'" 
-  "\nalias rsync-move='rsync -avzPh --remove-source-files'" 
-  "\nalias rsync-update='rsync -avzuPh'" 
-  "\nalias rsync-synchronize='rsync -avzuPh --delete'"
-)
-
-#alias function
-function aliases(){
+aliases(){
   clear
   while [[ $AliasMenu = 1 ]]; do
     echo -e "Any aliases you want to add?\n (1) Yes\n (2) No\n (3) List Current Aliases"
@@ -135,12 +137,23 @@ function aliases(){
       grep "^alias.*" "$1"
     fi
   done
-
 }
 
-#temporary fix for 'New Changes' in git commit message
+nvimconfig(){
+  echo -e "Do you want nvim config too? (Current config will be backed up)\n (1) Yes\n (2) No"
+  read -r nvimconfig
+  if [[ $nvimconfig == 1 ]]; then
+    random=$RANDOM
+    find ~/.config -type d -name "nvim" && rsync -avPh ~/.config/nvim/ ~/.config/nvim."$random".bak && rm -rf ~/.config/nvim
+    git clone https://github.com/alexnessy/nvim-config
+    cp -r nvim-config/nvim ~/.config/
+    rm -rf nvim-config
+  fi
+}
+
+# temporary fix for 'New Changes' in git commit message
 newChanges='"New Changes"'
-#add aliases here followed by \n
+clear
 echo "Welcome to..."
 echo -e " ${GREEN}
          __         ____          __            
@@ -150,7 +163,6 @@ echo -e " ${GREEN}
 /____/_/ /_/\___/_/_/____/\___/\__/\__,_/ .___/  
                                        /_/      ${NC}"
 while [[ $Menu == 1 ]]; do
-  :
   echo -e "Do you want:\n(1) Full setup \n(2) Light setup \n(3) More info"
   read -r choice
   if [[ $choice != 1 ]] && [[ $choice != 2 ]] && [[ $choice != 3 ]]; then
@@ -167,28 +179,28 @@ done
 # install packages
 for i in "${packageList[@]}"
 do
-  checker $i
+  checker "$i"
 done
 
 # install yay (change for paru later)
 if [[ $pacmanCode == 0 ]]; then
-  which yay
-  grepCode=$?
-  if [[ $grepCode =! 0 ]]; then
+  which paru
+  whichCode=$?
+  if [[ $whichCode != 0 ]]; then
     sudo pacman -S --needed --noconfirm base-devel git
-    git clone https://aur.archlinux.org/yay.git
-    cd yay || exit
+    git clone https://aur.archlinux.org/paru.git
+    cd paru || exit
     makepkg -si --noconfirm
     cd ..
-    rm -rf yay
+    rm -rf paru
     cd "$currentDir" || exit
   fi
 fi
 
 # add font to make sure it's available
-find -t file "MesloLGS" ~/.local/share/fonts
-findExitCode=$?
-if [[ $findExitCode =! 0 ]]; then
+find ~/.local/share/fonts -type f -name "MesloLGS NF Regular\.ttf" 
+findCode=$?
+if [[ $findCode != 0 ]]; then
   wget "https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS NF Regular.ttf"
   mkdir -p ~/.local/share/fonts
   mv 'MesloLGS NF Regular.ttf' ~/.local/share/fonts
@@ -196,9 +208,8 @@ fi
 
 echo "All packages installed"
  
-if [[ $shell != 1 ]] && [[ $shell != 2 ]]; then
-    exit
-fi
+[[ $shell != 1 ]] && [[ $shell != 2 ]] && exit
+
 if [[ $choice == 1 ]]; then
     if [[ $shell == 1 ]]; then
       shellInstall zsh full
@@ -214,15 +225,8 @@ elif [[ $choice == 2 ]]; then
 fi
 
 clear
-echo -e "Do you want nvim config too? (Current config will be backed up)\n (1) Yes\n (2) No"
-read -r nvimconfig
-if [[ $nvimconfig == 1 ]]; then
-  random=$RANDOM
-  ls ~/.config|grep "nvim" && rsync -avPh ~/.config/nvim/ ~/.config/nvim."$random".bak && rm -rf ~/.config/nvim
-  git clone https://github.com/alexnessy/nvim-config
-  cp -r nvim-config/nvim ~/.config/
-  rm -rf nvim-config
-fi
-[[ $choice == 1 ]] && [[ $shell == 1 ]] && echo "All changes made! Restart terminal for configuration of cli. Make sure to change terminal font to MesloLGS NF." && exit
-echo "All changes made! Make sure to change terminal font to MesloLGS NF."
 
+nvimconfig
+
+[[ $choice == 1 ]] && [[ $shell == 1 ]] && echo "All changes made! Restart terminal for configuration of CLI. Make sure to change terminal font to MesloLGS NF." && exit
+echo "All changes made! Make sure to change terminal font to MesloLGS NF."
