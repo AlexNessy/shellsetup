@@ -64,16 +64,13 @@ done
 # check package manager and set install function
 whichPM(){
   which "$1" > /dev/null 2>&1
-  export "$1Code=$?"
+  local exitCode=$?
+  [[ ${exitCode} == 0 ]] && checker(){ sudo "$1" "$2" '"$1"'; }  && checkerVar=1
 }
 
-whichPM dnf
-whichPM pacman
-whichPM apt
-
-[[ $dnfCode == 0 ]] && checker() { sudo dnf -y install "$1"; } && checkerVar=1
-[[ $pacmanCode == 0 ]] && checker(){ sudo pacman -S --noconfirm --needed "$1"; } && checkerVar=1
-[[ $aptCode == 0 ]] && checker(){ sudo apt -y install "$1"; } && checkerVar=1
+whichPM dnf "-y install"
+whichPM pacman "-S --no-confirm --needed"
+whichPM apt "-y install"
   
 [[ -z $checkerVar ]] && echo "Your package manager is not supported yet"
 
