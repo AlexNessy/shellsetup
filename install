@@ -60,6 +60,7 @@ while getopts 'p' flag; do
     exit 1 ;;
   esac
 done
+
 # check package manager and set install function
 whichPM(){
   which "$1" > /dev/null 2>&1
