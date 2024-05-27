@@ -5,12 +5,19 @@ NC='\033[0m'
 
 currentDir=$PWD
 
+# for paru
+which pacman > /dev/null 2>&1
+pacmanCode=$?
+
 # while loop vars
 Menu=1
 AliasMenu=1
 
+random=$RANDOM
+
 # package list for -p flag
 packageList=(
+  "base-devel"
   "github-cli"
   "gh"
   "cmatrix"
@@ -27,17 +34,36 @@ packageList=(
   "wget"
   "fd"
   "tmux"
+  "openssh"
+  "awk"
+  "grep"
+  "sed"
 )
 
+# temporary fix for 'New Changes' in git commit message
+newChanges='"New Changes"'
+
 alias=(
-  "alias nv='nvim'" 
-  "alias sp='sudo pacman'" 
-  "alias chx='chmod +x'" 
-  "alias gitc='git add .; git commit -m $newChanges; git push'"
-  "alias rsync-copy='rsync -avzPh'" 
-  "alias rsync-move='rsync -avzPh --remove-source-files'" 
-  "alias rsync-update='rsync -avzuPh'" 
-  "alias rsync-synchronize='rsync -avzuPh --delete'"
+  "nv='nvim'" 
+  "sp='sudo pacman'" 
+  "chx='chmod +x'" 
+  "gitc='git add .; git commit -m $newChanges; git push'"
+  "rsync-copy='rsync -avzPh'" 
+  "rsync-move='rsync -avzPh --remove-source-files'" 
+  "rsync-update='rsync -avzuPh'" 
+  "rsync-synchronize='rsync -avzuPh --delete'"
+  "yay='paru'"
+)
+
+plugins=(
+  "git"
+  "zsh-autosuggestions"
+  "zsh-syntax-highlighting"
+  "zsh-z"
+  "fzf"
+  "gh"
+  "magic-enter"
+  "colored-man-pages"
 )
 
 print_usage() {
@@ -69,6 +95,7 @@ whichPM() {
 }
 
 checker() { 
+  echo "Installing $1"
   IFS=' ' read -r -a flagsArray <<< "$flags"
   sudo "$packageManager" "${flagsArray[@]}" "$1" 
 }
@@ -81,42 +108,54 @@ whichPM "apt" "-y install"
 
 # 1st input for shell, 2nd input for type of config
 shellInstall(){
+  echo "Installing shell"
   checker "$1"
+  echo "Checking if $1 is default shell"
   Shell=$(which "$1")
   if [[ $SHELL != "$Shell" ]]; then
+    echo "$1 is not default, changing shell"
     chsh -s "$Shell"
   fi
   if [[ $2 = "full" ]]; then
+    echo "Creating backup of .$1rc"
+    cp ~/."$1"rc  ~/."$1"rc.bak."$random"
     if [[ $1 == "zsh" ]]; then
       # ohmyzsh installation
+      echo "Installing ohmyzsh"
       wget https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh -O - | sed s/RUNZSH:-yes/RUNZSH:-no/g | sh > /dev/null 2>&1
-      # plugins installation
-      git clone https://github.com/zsh-users/zsh-autosuggestions ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions 
-      git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting 
-      git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/.oh-my-zsh/custom/themes/powerlevel10k
-      git clone https://github.com/agkozak/zsh-z ~/.oh-my-zsh/custom/plugins/zsh-z
-      git clone --depth 1 https://github.com/unixorn/fzf-zsh-plugin.git ~/.oh-my-zsh/custom/plugins/fzf-zsh-plugin
-      git clone https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/gh ~/.oh-my-zsh/plugins/gh
-      git clone https://github.com/zshzoo/magic-enter ~/.oh-my-zsh/custom/plugins/magic-enter
       # plugins integration
-      sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions zsh-syntax-highlighting zsh-z fzf gh magic-enter colored-man-pages)/g' ~/.zshrc
-      sed -i 's@robbyrussell@powerlevel10k/powerlevel10k@g' ~/.zshrc
+      echo "Adding plugins"
+      pluginGrep=$(grep '^plugins=(.*)$' ~/.zshrc)
+      pluginAwk=$(awk -F "[()]" '{print $2}' <<< "$pluginGrep")
+      IFS=' ' read -r -a pluginArray <<< "$pluginAwk"
+      for i in "${pluginArray[@]}"
+      do
+        [[ "${plugins[*]}" =~ $i ]] || plugins+=("$i")
+      done
+      sed -i s/"^plugins=(.*)$"/"plugins=(${plugins[*]})"/g ~/.zshrc
+      echo "Adding theme"
+      sed -i 's@ZSH_THEME=.*@ZSH_THEME="powerlevel10k/powerlevel10k"@g' ~/.zshrc
     elif [[ $1 == "bash" ]]; then
       # ohmybash installation
+      echo "Installing ohmybash"
       bash -c "$(wget https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh -O -)" --unattended
     fi
   fi
   # aliases add
-  grep -q 'alias sp=' ~/."$1"rc
-  grepCode=$?
-  if [ "$grepCode" != 0 ]; then
-    echo -e "${alias[@]}" >> ~/."$1"rc
-  fi
   aliases ~/."$1"rc
+  echo "Sourcing .$1rc"
   /bin/"$1" -c "source ~/.$1rc"
 }
 
 aliases(){
+  rcFile="$1"
+  for i in "${alias[@]}"
+  do
+    aliasGrep=$(awk -F "'" '{print $1}' <<< "$i")
+    grep "alias $aliasGrep" "$rcFile" > /dev/null 2>&1
+    grepCode=$?
+    [[ $grepCode == 1 ]] && echo -e "alias $i" >> "$rcFile"
+  done
   while [[ $AliasMenu = 1 ]]; do
     echo -e "Any aliases you want to add?\n (1) Yes\n (2) No\n (3) List Current Aliases"
     read -r aliasChoice
@@ -125,17 +164,12 @@ aliases(){
       read -r aliasCmd
       echo "What alias do you want to use for this command?:"
       read -r aliasName
-      echo -e "alias $aliasName=$aliasCmd" >> "$1"
+      echo -e "alias $aliasName=$aliasCmd" >> "$rcFile"
       echo -e "Do you want to add another alias?\n (1) Yes\n (2) No"
       read -r aliasMenuChoice
-      if [[ $aliasMenuChoice == 2 ]]; then
-        AliasMenu=0
-      fi
-    elif [[ "$aliasChoice" == "2" ]]; then
-      AliasMenu=0
-    elif [[ "$aliasChoice" == "3" ]]; then
-      grep "^alias.*" "$1"
     fi
+    [[ "$aliasMenuChoice" == "2" || "$aliasChoice" == "2" ]] && AliasMenu=0
+    [[ "$aliasChoice" == "3" ]] && grep "^alias.*" "$rcFile"
   done
 }
 
@@ -143,16 +177,16 @@ nvimconfig(){
   echo -e "Do you want nvim config too? (Current config will be backed up)\n (1) Yes\n (2) No"
   read -r nvimconfig
   if [[ $nvimconfig == 1 ]]; then
-    random=$RANDOM
+    echo "Creating backup"
     find ~/.config -type d -name "nvim" && rsync -avPh ~/.config/nvim/ ~/.config/nvim."$random".bak && rm -rf ~/.config/nvim
+    echo "Cloning config"
     git clone https://github.com/alexnessy/nvim-config
+    echo "Copying config"
     cp -r nvim-config/nvim ~/.config/
     rm -rf nvim-config
   fi
 }
 
-# temporary fix for 'New Changes' in git commit message
-newChanges='"New Changes"'
 clear
 echo "Welcome to..."
 echo -e " ${GREEN}
@@ -182,12 +216,11 @@ do
   checker "$i"
 done
 
-# install yay (change for paru later)
+# install paru
 if [[ $pacmanCode == 0 ]]; then
   which paru
   whichCode=$?
   if [[ $whichCode != 0 ]]; then
-    sudo pacman -S --needed --noconfirm base-devel git
     git clone https://aur.archlinux.org/paru.git
     cd paru || exit
     makepkg -si --noconfirm
@@ -199,6 +232,7 @@ fi
 
 # add font to make sure it's available
 if [[ $shell == 1 ]] && [[ $choice == 1 ]]; then
+  echo "Installing font"
   find ~/.local/share/fonts -type f -name "MesloLGS NF Regular\.ttf" 
   findCode=$?
   if [[ $findCode != 0 ]]; then
