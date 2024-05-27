@@ -144,7 +144,8 @@ shellInstall(){
   # aliases add
   aliases ~/."$1"rc
   echo "Sourcing .$1rc"
-  /bin/"$1" -c "source ~/.$1rc"
+  [[ $Shell == 1 ]] && /bin/zsh -c "source $HOME/.zshrc"
+  [[ $Shell == 2 ]] && /bin/bash -c "source $HOME/.bashrc"
 }
 
 aliases(){
@@ -160,15 +161,13 @@ aliases(){
     echo -e "Any aliases you want to add?\n (1) Yes\n (2) No\n (3) List Current Aliases"
     read -r aliasChoice
     if [[ "$aliasChoice" == "1" ]]; then
-      echo "Alias Command (use '' instead of double quotes if you need to):"
+      echo "Alias Command (use double quotes instead of '' if you need to):"
       read -r aliasCmd
       echo "What alias do you want to use for this command?:"
       read -r aliasName
-      echo -e "alias $aliasName=$aliasCmd" >> "$rcFile"
-      echo -e "Do you want to add another alias?\n (1) Yes\n (2) No"
-      read -r aliasMenuChoice
+      echo -e "alias $aliasName='$aliasCmd'" >> "$rcFile"
     fi
-    [[ "$aliasMenuChoice" == "2" || "$aliasChoice" == "2" ]] && AliasMenu=0
+    [[ "$aliasChoice" == "2" ]] && AliasMenu=0
     [[ "$aliasChoice" == "3" ]] && grep "^alias.*" "$rcFile"
   done
 }
