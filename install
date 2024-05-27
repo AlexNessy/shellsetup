@@ -62,15 +62,20 @@ while getopts 'p' flag; do
 done
 
 # check package manager and set install function
-whichPM(){
-  which "$1" > /dev/null 2>&1
+whichPM() {
+  which "$1" >/dev/null 2>&1
   local exitCode=$?
-  [[ ${exitCode} == 0 ]] && checker(){ sudo "$1" "$2" '"$1"'; }  && checkerVar=1
+  [[ $exitCode == 0 ]] && packageManager="$1" && flags="$2" && checkerVar=1
 }
 
-whichPM dnf "-y install"
-whichPM pacman "-S --no-confirm --needed"
-whichPM apt "-y install"
+checker() { 
+  IFS=' ' read -r -a flagsArray <<< "$flags"
+  sudo "$packageManager" "${flagsArray[@]}" "$1" 
+}
+
+whichPM "dnf" "-y install"
+whichPM "pacman" "-S --noconfirm --needed"
+whichPM "apt" "-y install"
   
 [[ -z $checkerVar ]] && echo "Your package manager is not supported yet"
 
@@ -105,16 +110,13 @@ shellInstall(){
   grep -q 'alias sp=' ~/."$1"rc
   grepCode=$?
   if [ "$grepCode" != 0 ]; then
-      echo -e "${alias[@]}" >> ~/."$1"rc
-      aliases ~/."$1"rc
+    echo -e "${alias[@]}" >> ~/."$1"rc
   fi
+  aliases ~/."$1"rc
   /bin/"$1" -c "source ~/.$1rc"
-  clear
-  echo "changes made and applied! you can now restart your terminal"
 }
 
 aliases(){
-  clear
   while [[ $AliasMenu = 1 ]]; do
     echo -e "Any aliases you want to add?\n (1) Yes\n (2) No\n (3) List Current Aliases"
     read -r aliasChoice
