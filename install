@@ -91,10 +91,10 @@ done
 whichPM() {
   which "$1" >/dev/null 2>&1
   local exitCode=$?
-  [[ $exitCode == 0 ]] && packageManager="$1" && flags="$2" && checkerVar=1
+  [[ $exitCode == 0 ]] && packageManager="$1" && flags="$2" && installerVar=1
 }
 
-checker() { 
+installer() { 
   echo "Installing $1"
   IFS=' ' read -r -a flagsArray <<< "$flags"
   sudo "$packageManager" "${flagsArray[@]}" "$1" 
@@ -104,26 +104,31 @@ whichPM "dnf" "-y install"
 whichPM "pacman" "-S --noconfirm --needed"
 whichPM "apt" "-y install"
   
-[[ -z $checkerVar ]] && echo "Your package manager is not supported yet"
+[[ -z $installerVar ]] && echo "Your package manager is not supported yet"
 
 # 1st input for shell, 2nd input for type of config
 shellInstall(){
-  echo "Installing shell"
-  checker "$1"
-  echo "Checking if $1 is default shell"
-  Shell=$(which "$1")
-  if [[ $SHELL != "$Shell" ]]; then
-    echo "$1 is not default, changing shell"
-    chsh -s "$Shell"
+  echo "Installing $shell"
+  installer "$shell"
+  echo "Checking if $shell is default shell"
+  shellPath=$(which "$shell")
+  if [[ $SHELL != "$shellPath" ]]; then
+    echo "$shell is not default, changing shell"
+    chsh -s "$shellPath"
   fi
-  if [[ $2 = "full" ]]; then
-    echo "Creating backup of .$1rc"
-    cp ~/."$1"rc  ~/."$1"rc.bak."$random"
-    if [[ $1 == "zsh" ]]; then
+  if [[ $choice = "1" ]]; then
+    echo "Creating backup of .${shell}rc"
+    cp ~/."$shell"rc  ~/."$shell"rc.bak."$random"
+    echo "Installing ohmy${shell}"
+    if [[ $shell == "zsh" ]]; then
       # ohmyzsh installation
-      echo "Installing ohmyzsh"
       wget https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh -O - | sed s/RUNZSH:-yes/RUNZSH:-no/g | sh > /dev/null 2>&1
-      # plugins integration
+      # plugins + theme installation
+      git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/.oh-my-zsh/custom/themes/powerlevel10k
+      git clone https://github.com/zsh-users/zsh-autosuggestions ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions
+      git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
+      git clone https://github.com/agkozak/zsh-z ~/.oh-my-zsh/custom/plugins/zsh-z
+  # plugins integration
       echo "Adding plugins"
       pluginGrep=$(grep '^plugins=(.*)$' ~/.zshrc)
       pluginAwk=$(awk -F "[()]" '{print $2}' <<< "$pluginGrep")
@@ -135,17 +140,18 @@ shellInstall(){
       sed -i s/"^plugins=(.*)$"/"plugins=(${plugins[*]})"/g ~/.zshrc
       echo "Adding theme"
       sed -i 's@ZSH_THEME=.*@ZSH_THEME="powerlevel10k/powerlevel10k"@g' ~/.zshrc
-    elif [[ $1 == "bash" ]]; then
+    elif [[ $shell == "bash" ]]; then
       # ohmybash installation
-      echo "Installing ohmybash"
       bash -c "$(wget https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh -O -)" --unattended
     fi
   fi
   # aliases add
-  aliases ~/."$1"rc
-  echo "Sourcing .$1rc"
-  [[ $Shell == 1 ]] && /bin/zsh -c "source $HOME/.zshrc"
-  [[ $Shell == 2 ]] && /bin/bash -c "source $HOME/.bashrc"
+  aliases ~/."$shell"rc
+  echo "Sourcing .${shell}rc"
+  # probably broken
+  [[ $shell == zsh ]] && /bin/zsh -c "source $HOME/.zshrc"
+  [[ $shell == bash ]] && source "$HOME/.bashrc"
+  /bin/zsh -c 'source ~/.zshrc'
 }
 
 aliases(){
@@ -209,10 +215,16 @@ while [[ $Menu == 1 ]]; do
     Menu=0
   fi
 done
+
+[[ $shell == 1 ]] && shell="zsh" 
+[[ $shell == 2 ]] && shell="bash"
+[[ $choice == 1 ]] && choice="full"
+[[ $choice == 2 ]] && choice="lite"
+
 # install packages
 for i in "${packageList[@]}"
 do
-  checker "$i"
+  installer "$i"
 done
 
 # install paru
@@ -230,7 +242,7 @@ if [[ $pacmanCode == 0 ]]; then
 fi
 
 # add font to make sure it's available
-if [[ $shell == 1 ]] && [[ $choice == 1 ]]; then
+if [[ $shell == "zsh" && $choice == "full" ]]; then
   echo "Installing font"
   find ~/.local/share/fonts -type f -name "MesloLGS NF Regular\.ttf" 
   findCode=$?
@@ -242,22 +254,11 @@ if [[ $shell == 1 ]] && [[ $choice == 1 ]]; then
 fi
 
 echo "All packages installed"
+
  
-if [[ $choice == 1 ]]; then
-    if [[ $shell == 1 ]]; then
-      shellInstall zsh full
-    else
-      shellInstall bash full
-    fi
-elif [[ $choice == 2 ]]; then
-    if [[ $shell == 1 ]]; then
-      shellInstall zsh lite
-    else
-      shellInstall bash lite
-    fi
-fi
+shellInstall 
 
 nvimconfig
 
-[[ $choice == 1 ]] && [[ $shell == 1 ]] && echo "All changes made! Restart terminal for configuration of CLI. Make sure to change terminal font to MesloLGS NF." && exit
+[[ $choice == "zsh" && $shell == "full" ]] && echo "All changes made! Restart terminal for configuration of CLI. Make sure to change terminal font to MesloLGS NF." && exit
 echo -e "All changes made.\nEnjoy!"
