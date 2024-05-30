@@ -29,7 +29,6 @@ packageList=(
   "zsh"
   "bat"
   "smbclient"
-  "tldr"
   "fzf"
   "wget"
   "fd"
@@ -38,21 +37,18 @@ packageList=(
   "awk"
   "grep"
   "sed"
+  "tldr"
 )
 
-# temporary fix for 'New Changes' in git commit message
-newChanges='"New Changes"'
-
 alias=(
-  "nv='nvim'" 
-  "sp='sudo pacman'" 
-  "chx='chmod +x'" 
-  "gitc='git add .; git commit -m $newChanges; git push'"
-  "rsync-copy='rsync -avzPh'" 
-  "rsync-move='rsync -avzPh --remove-source-files'" 
-  "rsync-update='rsync -avzuPh'" 
-  "rsync-synchronize='rsync -avzuPh --delete'"
-  "yay='paru'"
+  'nv="nvim"'
+  'sp="sudo pacman"'
+  'chx="chmod +x"'
+  'gitc="git add .; git commit -m "New Changes"; git push"'
+  'rsync-copy="rsync -avzPh"'
+  'rsync-move="rsync -avzPh --remove-source-files"'
+  'rsync-update="rsync -avzuPh"'
+  'rsync-synchronize="rsync -avzuPh --delete"'
 )
 
 plugins=(
@@ -64,6 +60,13 @@ plugins=(
   "gh"
   "magic-enter"
   "colored-man-pages"
+)
+
+fonts=(
+  "Regular"
+  "Bold"
+  "Italic"
+  "Bold Italic"
 )
 
 print_usage() {
@@ -106,7 +109,6 @@ whichPM "apt" "-y install"
   
 [[ -z $installerVar ]] && echo "Your package manager is not supported yet"
 
-# 1st input for shell, 2nd input for type of config
 shellInstall(){
   echo "Installing $shell"
   installer "$shell"
@@ -116,7 +118,7 @@ shellInstall(){
     echo "$shell is not default, changing shell"
     chsh -s "$shellPath"
   fi
-  if [[ $choice = "1" ]]; then
+  if [[ $choice = "full" ]]; then
     echo "Creating backup of .${shell}rc"
     cp ~/."$shell"rc  ~/."$shell"rc.bak."$random"
     echo "Installing ohmy${shell}"
@@ -147,18 +149,14 @@ shellInstall(){
   fi
   # aliases add
   aliases ~/."$shell"rc
-  echo "Sourcing .${shell}rc"
-  # probably broken
-  [[ $shell == zsh ]] && /bin/zsh -c "source $HOME/.zshrc"
-  [[ $shell == bash ]] && source "$HOME/.bashrc"
-  /bin/zsh -c 'source ~/.zshrc'
+  nvimconfig
 }
 
 aliases(){
   rcFile="$1"
   for i in "${alias[@]}"
   do
-    aliasGrep=$(awk -F "'" '{print $1}' <<< "$i")
+    aliasGrep=$(awk -F "\"" '{print $1}' <<< "$i")
     grep "alias $aliasGrep" "$rcFile" > /dev/null 2>&1
     grepCode=$?
     [[ $grepCode == 1 ]] && echo -e "alias $i" >> "$rcFile"
@@ -167,11 +165,11 @@ aliases(){
     echo -e "Any aliases you want to add?\n (1) Yes\n (2) No\n (3) List Current Aliases"
     read -r aliasChoice
     if [[ "$aliasChoice" == "1" ]]; then
-      echo "Alias Command (use double quotes instead of '' if you need to):"
+      echo "Type in command (use '' quotes instead of double quotes if you need to):"
       read -r aliasCmd
-      echo "What alias do you want to use for this command?:"
+      echo "Type in alias for this command:"
       read -r aliasName
-      echo -e "alias $aliasName='$aliasCmd'" >> "$rcFile"
+      echo -e "alias $aliasName=\"$aliasCmd\"" >> "$rcFile"
     fi
     [[ "$aliasChoice" == "2" ]] && AliasMenu=0
     [[ "$aliasChoice" == "3" ]] && grep "^alias.*" "$rcFile"
@@ -192,7 +190,31 @@ nvimconfig(){
   fi
 }
 
+fontInstall(){
+  if [[ $shell == "zsh" && $choice == "full" ]]; then
+    echo "Installing font"
+    fontGit="https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS NF "
+    mkdir -p ~/.local/share/fonts
+    for i in "${fonts[@]}"
+    do
+      find "$HOME"/.local/share/fonts -type f -name "MesloLGS NF ${i}.ttf"|grep "."
+      findCode=${PIPESTATUS[1]}
+      echo "$findCode"
+      if [[ $findCode != 0 ]]; then
+        wget "${fontGit}${i}.ttf"
+        echo "${fontGit}${i}.ttf"
+        mv "MesloLGS NF $i.ttf" ~/.local/share/fonts
+      fi
+    done
+  fi
+}
+
+noRootAcess(){ echo "Root access disabled"; exit; }
+sudo echo "Root access enabled" || noRootAcess
+
 clear
+
+[[ $EUID == 0 ]] && echo "WARNING: You are running this script as root. Some features may not work properly." 
 echo "Welcome to..."
 echo -e " ${GREEN}
          __         ____          __            
@@ -204,14 +226,13 @@ echo -e " ${GREEN}
 while [[ $Menu == 1 ]]; do
   echo -e "Do you want:\n(1) Full setup \n(2) Light setup \n(3) More info"
   read -r choice
-  if [[ $choice != 1 ]] && [[ $choice != 2 ]] && [[ $choice != 3 ]]; then
-      exit
-  elif [[ $choice == 3 ]]; then
+  [[ $choice != 1 && $choice != 2 && $choice != 3 ]] && exit
+  if [[ $choice == 3 ]]; then
     echo -e "The full setup consists of all customisation options including setting the chosen shell as default, aliases, oh my (shell) installation and plugins. \nThe light setup consists of only setting the default shell without aliases and other features. To list packages, run with -p flag."
-  elif [[ $choice == 1 ]] || [[ $choice == 2 ]]; then
+  elif [[ $choice == 1 || $choice == 2 ]]; then
     echo -e "What shell do you want to use? \n(1) zsh \n(2) bash \n(3) skip shell config"
     read -r shell
-    [[ $shell != 1 ]] && [[ $shell != 2 ]] && [[ $shell != 3 ]] && exit
+    [[ $shell != 1 && $shell != 2 && $shell != 3 ]] && exit
     Menu=0
   fi
 done
@@ -227,11 +248,12 @@ do
   installer "$i"
 done
 
-# install paru
+# install paru + tlrc
 if [[ $pacmanCode == 0 ]]; then
   which paru
-  whichCode=$?
-  if [[ $whichCode != 0 ]]; then
+  paruCode=$?
+  [[ $paruCode != 0 ]] && echo "Do you want paru? (Y/N)" && read -r paruChoice
+  if [[ $paruChoice == "Y" || $paruChoice == "y" ]]; then
     git clone https://aur.archlinux.org/paru.git
     cd paru || exit
     makepkg -si --noconfirm
@@ -239,26 +261,26 @@ if [[ $pacmanCode == 0 ]]; then
     rm -rf paru
     cd "$currentDir" || exit
   fi
-fi
-
-# add font to make sure it's available
-if [[ $shell == "zsh" && $choice == "full" ]]; then
-  echo "Installing font"
-  find ~/.local/share/fonts -type f -name "MesloLGS NF Regular\.ttf" 
-  findCode=$?
-  if [[ $findCode != 0 ]]; then
-    wget "https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS NF Regular.ttf"
-    mkdir -p ~/.local/share/fonts
-    mv 'MesloLGS NF Regular.ttf' ~/.local/share/fonts
+  grep "chaotic-aur" /etc/pacman.conf > /dev/null 2>&1 
+  aurCode=$?
+  [[ $aurCode == 1 ]] && echo "Do you want chaotic-aur? (Y/N)" && read -r aurChoice
+  if [[ $aurChoice == "Y" || $aurChoice == "y" ]]; then
+    sudo pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com
+    sudo pacman-key --lsign-key 3056513887B78AEB
+    sudo pacman -U 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' 
+    sudo pacman -U 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst' 
+    echo -e "[chaotic-aur]
+    Include = /etc/pacman.d/chaotic-mirrorlist" | sudo tee -a /etc/pacman.conf
+    sudo pacman -Syyu
   fi
 fi
 
-echo "All packages installed"
+fontInstall
 
+echo "All packages installed"
  
 shellInstall 
 
-nvimconfig
-
 [[ $choice == "zsh" && $shell == "full" ]] && echo "All changes made! Restart terminal for configuration of CLI. Make sure to change terminal font to MesloLGS NF." && exit
 echo -e "All changes made.\nEnjoy!"
+exec "/bin/$shell"
