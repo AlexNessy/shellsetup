@@ -15,7 +15,6 @@ AliasMenu=1
 
 random=$RANDOM
 
-# package list for -p flag
 packageList=(
   "base-devel"
   "github-cli"
@@ -73,7 +72,6 @@ print_usage() {
   echo "Usage: -p - list packages"
 }
 
-# used for -p flag
 printPackages(){
   for i in "${packageList[@]}"
   do
@@ -81,7 +79,6 @@ printPackages(){
   done
 }
 
-# flags
 while getopts 'p' flag; do
   case "$flag" in
     p) printPackages; exit;;
@@ -130,7 +127,7 @@ shellInstall(){
       git clone https://github.com/zsh-users/zsh-autosuggestions ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions
       git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
       git clone https://github.com/agkozak/zsh-z ~/.oh-my-zsh/custom/plugins/zsh-z
-  # plugins integration
+  # plugins integration 
       echo "Adding plugins"
       pluginGrep=$(grep '^plugins=(.*)$' ~/.zshrc)
       pluginAwk=$(awk -F "[()]" '{print $2}' <<< "$pluginGrep")
@@ -161,7 +158,7 @@ aliases(){
     grepCode=$?
     [[ $grepCode == 1 ]] && echo -e "alias $i" >> "$rcFile"
   done
-  while [[ $AliasMenu = 1 ]]; do
+  while [[ $AliasMenu == 1 ]]; do
     echo -e "Any aliases you want to add?\n (1) Yes\n (2) No\n (3) List Current Aliases"
     read -r aliasChoice
     if [[ "$aliasChoice" == "1" ]]; then
