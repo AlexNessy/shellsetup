@@ -37,6 +37,7 @@ packageList=(
   "grep"
   "sed"
   "tldr"
+  "zoxide"
 )
 
 alias=(
@@ -54,7 +55,6 @@ plugins=(
   "git"
   "zsh-autosuggestions"
   "zsh-syntax-highlighting"
-  "zsh-z"
   "fzf"
   "gh"
   "magic-enter"
@@ -117,35 +117,36 @@ shellInstall(){
   fi
   if [[ $choice = "full" ]]; then
     echo "Creating backup of .${shell}rc"
-    cp ~/."$shell"rc  ~/."$shell"rc.bak."$random"
+    cp "$HOME"/."$shell"rc  "$HOME"/."$shell"rc.bak."$random"
     echo "Installing ohmy${shell}"
     if [[ $shell == "zsh" ]]; then
       # ohmyzsh installation
       wget https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh -O - | sed s/RUNZSH:-yes/RUNZSH:-no/g | sh > /dev/null 2>&1
       # plugins + theme installation
-      git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/.oh-my-zsh/custom/themes/powerlevel10k
-      git clone https://github.com/zsh-users/zsh-autosuggestions ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions
-      git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
-      git clone https://github.com/agkozak/zsh-z ~/.oh-my-zsh/custom/plugins/zsh-z
+      git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$HOME"/.oh-my-zsh/custom/themes/powerlevel10k
+      git clone https://github.com/zsh-users/zsh-autosuggestions "$HOME"/.oh-my-zsh/custom/plugins/zsh-autosuggestions
+      git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$HOME"/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
   # plugins integration 
       echo "Adding plugins"
-      pluginGrep=$(grep '^plugins=(.*)$' ~/.zshrc)
+      pluginGrep=$(grep '^plugins=(.*)$' "$HOME"/.zshrc)
       pluginAwk=$(awk -F "[()]" '{print $2}' <<< "$pluginGrep")
       IFS=' ' read -r -a pluginArray <<< "$pluginAwk"
       for i in "${pluginArray[@]}"
       do
         [[ "${plugins[*]}" =~ $i ]] || plugins+=("$i")
       done
-      sed -i s/"^plugins=(.*)$"/"plugins=(${plugins[*]})"/g ~/.zshrc
+      sed -i s/"^plugins=(.*)$"/"plugins=(${plugins[*]})"/g "$HOME"/.zshrc
       echo "Adding theme"
-      sed -i 's@ZSH_THEME=.*@ZSH_THEME="powerlevel10k/powerlevel10k"@g' ~/.zshrc
+      sed -i 's@ZSH_THEME=.*@ZSH_THEME="powerlevel10k/powerlevel10k"@g' "$HOME"/.zshrc
+      echo "Adding zoxide"
+      grep 'eval "\$(zoxide init .*zsh)"' "$HOME"/.zshrc || echo 'eval "$(zoxide init --cmd cd zsh)"' >> "$HOME"/.zshrc
     elif [[ $shell == "bash" ]]; then
       # ohmybash installation
       bash -c "$(wget https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh -O -)" --unattended
     fi
   fi
   # aliases add
-  aliases ~/."$shell"rc
+  aliases "$HOME"/."$shell"rc
   nvimconfig
 }
 
@@ -178,11 +179,11 @@ nvimconfig(){
   read -r nvimconfig
   if [[ $nvimconfig == 1 ]]; then
     echo "Creating backup"
-    find ~/.config -type d -name "nvim" && rsync -avPh ~/.config/nvim/ ~/.config/nvim."$random".bak && rm -rf ~/.config/nvim
+    find "$HOME"/.config -type d -name "nvim" && rsync -avPh "$HOME"/.config/nvim/ "$HOME"/.config/nvim."$random".bak && rm -rf "$HOME"/.config/nvim
     echo "Cloning config"
     git clone https://github.com/alexnessy/nvim-config
     echo "Copying config"
-    cp -r nvim-config/nvim ~/.config/
+    cp -r nvim-config/nvim "$HOME"/.config/
     rm -rf nvim-config
   fi
 }
@@ -191,7 +192,7 @@ fontInstall(){
   if [[ $shell == "zsh" && $choice == "full" ]]; then
     echo "Installing font"
     fontGit="https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS NF "
-    mkdir -p ~/.local/share/fonts
+    mkdir -p "$HOME"/.local/share/fonts
     for i in "${fonts[@]}"
     do
       find "$HOME"/.local/share/fonts -type f -name "MesloLGS NF ${i}.ttf"|grep "."
@@ -200,7 +201,7 @@ fontInstall(){
       if [[ $findCode != 0 ]]; then
         wget "${fontGit}${i}.ttf"
         echo "${fontGit}${i}.ttf"
-        mv "MesloLGS NF $i.ttf" ~/.local/share/fonts
+        mv "MesloLGS NF $i.ttf" "$HOME"/.local/share/fonts
       fi
     done
   fi
