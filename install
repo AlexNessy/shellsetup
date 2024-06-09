@@ -44,7 +44,7 @@ alias=(
   'nv="nvim"'
   'sp="sudo pacman"'
   'chx="chmod +x"'
-  'gitc="git add .; git commit -m "New Changes"; git push"'
+  'gitc="git add .; git commit -m \"New Changes\"; git push"'
   'rsync-copy="rsync -avzPh"'
   'rsync-move="rsync -avzPh --remove-source-files"'
   'rsync-update="rsync -avzuPh"'
@@ -246,7 +246,7 @@ do
   installer "$i"
 done
 
-# install paru + tlrc
+# install paru
 if [[ $pacmanCode == 0 ]]; then
   which paru
   paruCode=$?
@@ -259,6 +259,7 @@ if [[ $pacmanCode == 0 ]]; then
     rm -rf paru
     cd "$currentDir" || exit
   fi
+  # install chaotic-aur
   grep "chaotic-aur" /etc/pacman.conf > /dev/null 2>&1 
   aurCode=$?
   [[ $aurCode == 1 ]] && echo "Do you want chaotic-aur? (Y/N)" && read -r aurChoice
