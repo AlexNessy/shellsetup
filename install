@@ -280,6 +280,6 @@ echo "All packages installed"
  
 shellInstall 
 
-[[ $choice == "zsh" && $shell == "full" ]] && echo "All changes made! Restart terminal for configuration of CLI. Make sure to change terminal font to MesloLGS NF." && exit
+[[ $choice == "zsh" && $shell == "full" ]] && echo "All changes made! Restart terminal for configuration of CLI. Make sure to change terminal font to MesloLGS NF."
 echo -e "All changes made.\nEnjoy!"
 exec "/bin/$shell"
