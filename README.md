@@ -7,7 +7,7 @@
 - [x] ohmybash setup  
 - [x] Multiple package manger support
 
-# To Do 
+## TO DO:
 
 
 - [ ] Python wrapper
