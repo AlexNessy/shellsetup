@@ -7,3 +7,9 @@
 - [x] ohmybash setup  
 - [x] Multiple package manger support
 
+# To Do 
+
+
+- [ ] Python wrapper
+- [ ] Font chooser
+
