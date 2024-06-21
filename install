@@ -44,7 +44,6 @@ alias=(
   'nv="nvim"'
   'sp="sudo pacman"'
   'chx="chmod +x"'
-  'gitc="git add .; git commit -m \"New Changes\"; git push"'
   'rsync-copy="rsync -avzPh"'
   'rsync-move="rsync -avzPh --remove-source-files"'
   'rsync-update="rsync -avzuPh"'
@@ -73,9 +72,9 @@ print_usage() {
 }
 
 printPackages(){
-  for i in "${packageList[@]}"
+  for package in "${packageList[@]}"
   do
-    echo "$i"
+    echo "$package"
   done
 }
 
@@ -88,7 +87,7 @@ while getopts 'p' flag; do
 done
 
 # check package manager and set install function
-whichPM() {
+findPackageManager() {
   which "$1" >/dev/null 2>&1
   local exitCode=$?
   [[ $exitCode == 0 ]] && packageManager="$1" && flags="$2" && installerVar=1
@@ -96,14 +95,15 @@ whichPM() {
 
 installer() { 
   echo "Installing $1"
-  IFS=' ' read -r -a flagsArray <<< "$flags"
   sudo "$packageManager" "${flagsArray[@]}" "$1" 
 }
 
-whichPM "dnf" "-y install"
-whichPM "pacman" "-S --noconfirm --needed"
-whichPM "apt" "-y install"
+findPackageManager "dnf" "-y install"
+findPackageManager "pacman" "-S --noconfirm --needed"
+findPackageManager "apt" "-y install"
   
+IFS=' ' read -r -a flagsArray <<< "$flags"
+
 [[ -z $installerVar ]] && echo "Your package manager is not supported yet"
 
 shellInstall(){
@@ -131,15 +131,17 @@ shellInstall(){
       pluginGrep=$(grep '^plugins=(.*)$' "$HOME"/.zshrc)
       pluginAwk=$(awk -F "[()]" '{print $2}' <<< "$pluginGrep")
       IFS=' ' read -r -a pluginArray <<< "$pluginAwk"
-      for i in "${pluginArray[@]}"
+      for plugin in "${pluginArray[@]}"
       do
-        [[ "${plugins[*]}" =~ $i ]] || plugins+=("$i")
+        [[ "${plugins[*]}" =~ $plugin ]] || plugins+=("$plugin")
       done
       sed -i s/"^plugins=(.*)$"/"plugins=(${plugins[*]})"/g "$HOME"/.zshrc
       echo "Adding theme"
       sed -i 's@ZSH_THEME=.*@ZSH_THEME="powerlevel10k/powerlevel10k"@g' "$HOME"/.zshrc
       echo "Adding zoxide"
       grep 'eval "\$(zoxide init .*zsh)"' "$HOME"/.zshrc || echo 'eval "$(zoxide init --cmd cd zsh)"' >> "$HOME"/.zshrc
+      echo "Adding git alias"
+      grep "gitc" "$HOME"/.zshrc || echo 'gitc() { git add .; git commit -m "$*:-New Changes"; git push; }'
     elif [[ $shell == "bash" ]]; then
       # ohmybash installation
       bash -c "$(wget https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh -O -)" --unattended
@@ -193,17 +195,53 @@ fontInstall(){
     echo "Installing font"
     fontGit="https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS NF "
     mkdir -p "$HOME"/.local/share/fonts
-    for i in "${fonts[@]}"
+    for typeface in "${fonts[@]}"
     do
-      find "$HOME"/.local/share/fonts -type f -name "MesloLGS NF ${i}.ttf"|grep "."
+      find "$HOME"/.local/share/fonts -type f -name "MesloLGS NF ${typeface}.ttf"|grep "."
       findCode=${PIPESTATUS[1]}
       echo "$findCode"
       if [[ $findCode != 0 ]]; then
-        wget "${fontGit}${i}.ttf"
-        echo "${fontGit}${i}.ttf"
-        mv "MesloLGS NF $i.ttf" "$HOME"/.local/share/fonts
+        wget "${fontGit}${typeface}.ttf"
+        echo "${fontGit}${typeface}.ttf"
+        mv "MesloLGS NF $typeface.ttf" "$HOME"/.local/share/fonts
       fi
     done
+  fi
+}
+
+aurHelperInstall() {
+  git clone https://aur.archlinux.org/"$1".git
+  cd "$1" || exit
+  makepkg -si --noconfirm
+  cd ..
+  rm -rf "$1"
+  cd "$currentDir" || exit
+}
+pacmanInstall() {
+  if [[ $pacmanCode == 0 ]]; then
+    which paru > /dev/null 2>&1
+    paruCode=$?
+    which yay > /dev/null 2>&1
+    yayCode=$?
+    if [[ $paruCode != 0 && $yayCode != 0 ]]; then
+      echo -e "What AUR helper would you like?\n(1) paru\n(2) yay\n(3) skip"
+      read -r aurHelperChoice
+    fi
+    [[ $aurHelperChoice == 1 ]] && aurHelperInstall paru
+    [[ $aurHelperChoice == 2 ]] && aurHelperInstall yay
+    # install chaotic-aur
+    grep "chaotic-aur" /etc/pacman.conf > /dev/null 2>&1 
+    chaoticAurCode=$?
+    [[ $chaoticAurCode == 1 ]] && echo "Do you want chaotic-aur? (Y/N)" && read -r aurChoice
+    if [[ $aurChoice == "Y" || $aurChoice == "y" ]]; then
+      sudo pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com
+      sudo pacman-key --lsign-key 3056513887B78AEB
+      sudo pacman -U 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' 
+      sudo pacman -U 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst' 
+      echo -e "[chaotic-aur]
+      Include = /etc/pacman.d/chaotic-mirrorlist" | sudo tee -a /etc/pacman.conf
+      sudo pacman -Syyu
+    fi
   fi
 }
 
@@ -241,38 +279,13 @@ done
 [[ $choice == 2 ]] && choice="lite"
 
 # install packages
-for i in "${packageList[@]}"
+for package in "${packageList[@]}"
 do
-  installer "$i"
+  installer "$package"
 done
 
-# install paru
-if [[ $pacmanCode == 0 ]]; then
-  which paru
-  paruCode=$?
-  [[ $paruCode != 0 ]] && echo "Do you want paru? (Y/N)" && read -r paruChoice
-  if [[ $paruChoice == "Y" || $paruChoice == "y" ]]; then
-    git clone https://aur.archlinux.org/paru.git
-    cd paru || exit
-    makepkg -si --noconfirm
-    cd ..
-    rm -rf paru
-    cd "$currentDir" || exit
-  fi
-  # install chaotic-aur
-  grep "chaotic-aur" /etc/pacman.conf > /dev/null 2>&1 
-  aurCode=$?
-  [[ $aurCode == 1 ]] && echo "Do you want chaotic-aur? (Y/N)" && read -r aurChoice
-  if [[ $aurChoice == "Y" || $aurChoice == "y" ]]; then
-    sudo pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com
-    sudo pacman-key --lsign-key 3056513887B78AEB
-    sudo pacman -U 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' 
-    sudo pacman -U 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst' 
-    echo -e "[chaotic-aur]
-    Include = /etc/pacman.d/chaotic-mirrorlist" | sudo tee -a /etc/pacman.conf
-    sudo pacman -Syyu
-  fi
-fi
+# install paru + chaotic-aur
+pacmanInstall
 
 fontInstall
 
