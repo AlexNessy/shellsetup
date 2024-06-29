@@ -38,6 +38,7 @@ packageList=(
   "sed"
   "tldr"
   "zoxide"
+  "chezmoi"
 )
 
 alias=(
