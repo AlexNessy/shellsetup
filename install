@@ -95,8 +95,10 @@ findPackageManager() {
 }
 
 installer() { 
-  echo "Installing $1"
-  sudo "$packageManager" "${flagsArray[@]}" "$1" 
+  for package in "${packageList[@]}"; do
+    echo "Installing $package"
+    sudo "$packageManager" "${flagsArray[@]}" "$package" 
+  done
 }
 
 findPackageManager "dnf" "-y install"
@@ -139,10 +141,10 @@ shellInstall(){
       sed -i s/"^plugins=(.*)$"/"plugins=(${plugins[*]})"/g "$HOME"/.zshrc
       echo "Adding theme"
       sed -i 's@ZSH_THEME=.*@ZSH_THEME="powerlevel10k/powerlevel10k"@g' "$HOME"/.zshrc
+      echo "Adding git alias"
+      grep "gitc" "$HOME"/.zshrc || echo 'gitc() { git add .; git commit -m "$*:-New Changes"; git push; }' >> "$HOME"/.zshrc
       echo "Adding zoxide"
       grep 'eval "\$(zoxide init .*zsh)"' "$HOME"/.zshrc || echo 'eval "$(zoxide init --cmd cd zsh)"' >> "$HOME"/.zshrc
-      echo "Adding git alias"
-      grep "gitc" "$HOME"/.zshrc || echo 'gitc() { git add .; git commit -m "$*:-New Changes"; git push; }'
     elif [[ $shell == "bash" ]]; then
       # ohmybash installation
       bash -c "$(wget https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh -O -)" --unattended
@@ -163,7 +165,7 @@ aliases(){
     [[ $grepCode == 1 ]] && echo -e "alias $i" >> "$rcFile"
   done
   while [[ $AliasMenu == 1 ]]; do
-    echo -e "Any aliases you want to add?\n (1) Yes\n (2) No\n (3) List Current Aliases"
+    echo -e "Any aliases you want to add?\n(1) Yes\n(2) No\n(3) List Current Aliases"
     read -r aliasChoice
     if [[ "$aliasChoice" == "1" ]]; then
       echo "Type in command (use '' quotes instead of double quotes if you need to):"
@@ -178,7 +180,7 @@ aliases(){
 }
 
 nvimconfig(){
-  echo -e "Do you want nvim config too? (Current config will be backed up)\n (1) Yes\n (2) No"
+  echo -e "Do you want nvim config too? (Current config will be backed up)\n(1) Yes\n(2) No"
   read -r nvimconfig
   if [[ $nvimconfig == 1 ]]; then
     echo "Creating backup"
@@ -193,20 +195,25 @@ nvimconfig(){
 
 fontInstall(){
   if [[ $shell == "zsh" && $choice == "full" ]]; then
-    echo "Installing font"
-    fontGit="https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS NF "
-    mkdir -p "$HOME"/.local/share/fonts
-    for typeface in "${fonts[@]}"
-    do
-      find "$HOME"/.local/share/fonts -type f -name "MesloLGS NF ${typeface}.ttf"|grep "."
-      findCode=${PIPESTATUS[1]}
-      echo "$findCode"
-      if [[ $findCode != 0 ]]; then
-        wget "${fontGit}${typeface}.ttf"
-        echo "${fontGit}${typeface}.ttf"
-        mv "MesloLGS NF $typeface.ttf" "$HOME"/.local/share/fonts
-      fi
-    done
+    echo "Installing fonts"
+    echo -e "Would you like\n(1) MesloLGS (works better with zsh theme)\n(2) JetBrains (looks prettier)"
+    read -r fontChoice
+    [[ $fontChoice == 2 ]] && /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/JetBrains/JetBrainsMono/master/install_manual.sh)"
+    if [[ $fontChoice == 1 ]]; then
+      fontGit="https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS NF "
+      mkdir -p "$HOME"/.local/share/fonts
+      for typeface in "${fonts[@]}"
+      do
+        find "$HOME"/.local/share/fonts -type f -name "MesloLGS NF ${typeface}.ttf"|grep "."
+        findCode=${PIPESTATUS[1]}
+        echo "$findCode"
+        if [[ $findCode != 0 ]]; then
+          wget "${fontGit}${typeface}.ttf"
+          echo "${fontGit}${typeface}.ttf"
+          mv "MesloLGS NF $typeface.ttf" "$HOME"/.local/share/fonts
+        fi
+      done
+    fi
   fi
 }
 
@@ -280,10 +287,7 @@ done
 [[ $choice == 2 ]] && choice="lite"
 
 # install packages
-for package in "${packageList[@]}"
-do
-  installer "$package"
-done
+installer 
 
 # install paru + chaotic-aur
 pacmanInstall
