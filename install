@@ -96,7 +96,11 @@ findPackageManager() {
   [[ $exitCode == 0 ]] && packageManager="$1" && flags="$2" && installerVar=1
 }
 
-installer() { 
+installer() {
+  echo "Installing $package"
+  sudo "$packageManager" "${flagsArray[@]}" "$package" 
+}
+loopInstaller() { 
   for package in "${packageList[@]}"; do
     echo "Installing $package"
     sudo "$packageManager" "${flagsArray[@]}" "$package" 
@@ -208,10 +212,8 @@ fontInstall(){
       do
         find "$HOME"/.local/share/fonts -type f -name "MesloLGS NF ${typeface}.ttf"|grep "."
         findCode=${PIPESTATUS[1]}
-        echo "$findCode"
         if [[ $findCode != 0 ]]; then
           wget "${fontGit}${typeface}.ttf"
-          echo "${fontGit}${typeface}.ttf"
           mv "MesloLGS NF $typeface.ttf" "$HOME"/.local/share/fonts
         fi
       done
@@ -264,9 +266,11 @@ dotfileInstall() {
   cd "$HOME"/.local/share/chezmoi
   git remote -v | grep "."
   chezmoiContents = $?
-  [[ $chezmoiContents == 0 ]] && echo "Overwrite current chezmoi url? (Y/N)"
-  read -r chezmoiOverwrite
-  [[ $chezmoiOverwrite != "Y" || $chezmoiOverwrite != "y" ]] && return 0
+  if [[ $chezmoiContents == 0 ]]; then
+    echo "Overwrite current chezmoi url? (Y/N)"
+    read -r chezmoiOverwrite
+    [[ $chezmoiOverwrite != "Y" || $chezmoiOverwrite != "y" ]] && return 0
+  fi
   git remote add origin $gitRepo
   git remote set-url $gitRepo
   git pull origin master || git pull origin main
@@ -307,7 +311,7 @@ done
 [[ $choice == 2 ]] && choice="lite"
 
 # install packages
-installer 
+loopInstaller 
 
 # install paru + chaotic-aur
 pacmanInstall
