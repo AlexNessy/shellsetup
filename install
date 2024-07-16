@@ -43,12 +43,14 @@ packageList=(
 
 alias=(
   'nv="nvim"'
+  'snv="sudo nvim"'
   'sp="sudo pacman"'
   'chx="chmod +x"'
   'rsync-copy="rsync -avzPh"'
   'rsync-move="rsync -avzPh --remove-source-files"'
   'rsync-update="rsync -avzuPh"'
   'rsync-synchronize="rsync -avzuPh --delete"'
+  'open="xdg-open"'
 )
 
 plugins=(
@@ -253,6 +255,24 @@ pacmanInstall() {
   fi
 }
 
+dotfileInstall() {
+  echo "Do you want to install your dotfiles? (Y/N)"; read -r dotfileAnswer
+  [[ $dotfileAnswer == "N" || $dotfileAnswer == "n" ]] && return 0
+  echo "Please type your (full) dotfile repo url"
+  read -r gitRepo
+  chezmoi init
+  cd "$HOME"/.local/share/chezmoi
+  git remote -v | grep "."
+  chezmoiContents = $?
+  [[ $chezmoiContents == 0 ]] && echo "Overwrite current chezmoi url? (Y/N)"
+  read -r chezmoiOverwrite
+  [[ $chezmoiOverwrite != "Y" || $chezmoiOverwrite != "y" ]] && return 0
+  git remote add origin $gitRepo
+  git remote set-url $gitRepo
+  git pull origin master || git pull origin main
+  chezmoi apply
+}
+
 noRootAcess(){ echo "Root access disabled"; exit; }
 sudo echo "Root access enabled" || noRootAcess
 
@@ -291,6 +311,8 @@ installer
 
 # install paru + chaotic-aur
 pacmanInstall
+
+dotfileInstall
 
 fontInstall
 
