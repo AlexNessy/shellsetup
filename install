@@ -96,14 +96,15 @@ findPackageManager() {
   [[ $exitCode == 0 ]] && packageManager="$1" && flags="$2" && installerVar=1
 }
 
+# do these functions not do the same thing? 
 installer() {
-  echo "Installing $package"
-  sudo "$packageManager" "${flagsArray[@]}" "$package" 
+  echo "Installing $1"
+  sudo "$packageManager" "${flagsArray[@]}" "$1" 
 }
+
 loopInstaller() { 
   for package in "${packageList[@]}"; do
-    echo "Installing $package"
-    sudo "$packageManager" "${flagsArray[@]}" "$package" 
+    installer "$1"
   done
 }
 
@@ -174,9 +175,9 @@ aliases(){
     echo -e "Any aliases you want to add?\n(1) Yes\n(2) No\n(3) List Current Aliases"
     read -r aliasChoice
     if [[ "$aliasChoice" == "1" ]]; then
-      echo "Type in command (use '' quotes instead of double quotes if you need to):"
+      echo "Type in the command that will be run when you use your alias (use '' quotes instead of double quotes if you need to):"
       read -r aliasCmd
-      echo "Type in alias for this command:"
+      echo "Type in the alias for this command:"
       read -r aliasName
       echo -e "alias $aliasName=\"$aliasCmd\"" >> "$rcFile"
     fi
@@ -280,50 +281,62 @@ dotfileInstall() {
 noRootAcess(){ echo "Root access disabled"; exit; }
 sudo echo "Root access enabled" || noRootAcess
 
+menuScreen() {
+  [[ $EUID == 0 ]] && echo "WARNING: You are running this script as root. Some features may not work properly." 
+  echo "Welcome to..."
+  echo -e " ${GREEN}
+           __         ____          __            
+     _____/ /_  ___  / / /_______  / /___  ______  
+    / ___/ __ \/ _ \/ / / ___/ _ \/ __/ / / / __ \ 
+   (__  ) / / /  __/ / (__  )  __/ /_/ /_/ / /_/ / 
+  /____/_/ /_/\___/_/_/____/\___/\__/\__,_/ .___/  
+                                         /_/      ${NC}"
+  while [[ $Menu == 1 ]]; do
+    echo -e "Do you want:\n(1) Full setup \n(2) Light setup \n(3) More info \n(4) Exit"
+    read -r choice
+    [[ $choice == 4 ]] && exit
+    [[ $choice != 1 && $choice != 2 && $choice != 3 ]] && exit
+    if [[ $choice == 3 ]]; then
+      echo -e "The full setup consists of all customisation options including setting the chosen shell as default, aliases, oh my (shell) installation and plugins. \nThe light setup consists of only setting the default shell without aliases and other features. To list packages, run with -p flag."
+    elif [[ $choice == 1 || $choice == 2 ]]; then
+      echo -e "What shell do you want to use? \n(1) zsh \n(2) bash \n(3) skip shell config"
+      read -r shell
+      [[ $shell != 1 && $shell != 2 && $shell != 3 ]] && exit
+      Menu=0
+    fi
+  done
+}
+
 clear
 
-[[ $EUID == 0 ]] && echo "WARNING: You are running this script as root. Some features may not work properly." 
-echo "Welcome to..."
-echo -e " ${GREEN}
-         __         ____          __            
-   _____/ /_  ___  / / /_______  / /___  ______  
-  / ___/ __ \/ _ \/ / / ___/ _ \/ __/ / / / __ \ 
- (__  ) / / /  __/ / (__  )  __/ /_/ /_/ / /_/ / 
-/____/_/ /_/\___/_/_/____/\___/\__/\__,_/ .___/  
-                                       /_/      ${NC}"
-while [[ $Menu == 1 ]]; do
-  echo -e "Do you want:\n(1) Full setup \n(2) Light setup \n(3) More info"
-  read -r choice
-  [[ $choice != 1 && $choice != 2 && $choice != 3 ]] && exit
-  if [[ $choice == 3 ]]; then
-    echo -e "The full setup consists of all customisation options including setting the chosen shell as default, aliases, oh my (shell) installation and plugins. \nThe light setup consists of only setting the default shell without aliases and other features. To list packages, run with -p flag."
-  elif [[ $choice == 1 || $choice == 2 ]]; then
-    echo -e "What shell do you want to use? \n(1) zsh \n(2) bash \n(3) skip shell config"
-    read -r shell
-    [[ $shell != 1 && $shell != 2 && $shell != 3 ]] && exit
-    Menu=0
-  fi
-done
+# Start point
+main(){
+  menuScreen
 
-[[ $shell == 1 ]] && shell="zsh" 
-[[ $shell == 2 ]] && shell="bash"
-[[ $choice == 1 ]] && choice="full"
-[[ $choice == 2 ]] && choice="lite"
+  [[ $shell == 1 ]] && shell="zsh" 
+  [[ $shell == 2 ]] && shell="bash"
+  [[ $choice == 1 ]] && choice="full"
+  [[ $choice == 2 ]] && choice="lite"
 
-# install packages
-loopInstaller 
+  # install packages
+  loopInstaller 
 
-# install paru + chaotic-aur
-pacmanInstall
+  # install paru + chaotic-aur
+  pacmanInstall
 
-dotfileInstall
+  dotfileInstall
 
-fontInstall
+  fontInstall
 
-echo "All packages installed"
- 
-shellInstall 
+  echo "All packages installed"
+   
+  shellInstall 
 
-[[ $choice == "zsh" && $shell == "full" ]] && echo "All changes made! Restart terminal for configuration of CLI. Make sure to change terminal font to MesloLGS NF."
-echo -e "All changes made.\nEnjoy!"
-exec "/bin/$shell"
+  [[ $choice == "zsh" && $shell == "full" ]] && echo "All changes made! Restart terminal for configuration of CLI. Make sure to change terminal font to your chosen font." && exec "/bin/$shell" && exit
+  echo -e "All changes made.\nEnjoy!"
+  exec "/bin/$shell"
+}
+
+main
+
+
