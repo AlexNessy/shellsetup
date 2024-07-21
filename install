@@ -96,7 +96,6 @@ findPackageManager() {
   [[ $exitCode == 0 ]] && packageManager="$1" && flags="$2" && installerVar=1
 }
 
-# do these functions not do the same thing? 
 installer() {
   echo "Installing $1"
   sudo "$packageManager" "${flagsArray[@]}" "$1" 
