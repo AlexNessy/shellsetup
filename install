@@ -259,7 +259,7 @@ pacmanInstall() {
 }
 
 dotfileInstall() {
-  echo "Do you want to install your dotfiles? (Y/N)"; read -r dotfileAnswer
+  echo "Do you want to install your dotfiles? (Y/n)"; read -r dotfileAnswer
   [[ $dotfileAnswer == "N" || $dotfileAnswer == "n" ]] && return 0
   echo "Please type your (full) dotfile repo url"
   read -r gitRepo
@@ -268,9 +268,9 @@ dotfileInstall() {
   git remote -v | grep "."
   chezmoiContents = $?
   if [[ $chezmoiContents == 0 ]]; then
-    echo "Overwrite current chezmoi url? (Y/N)"
+    echo "Overwrite current chezmoi url? (Y/n)"
     read -r chezmoiOverwrite
-    [[ $chezmoiOverwrite != "Y" || $chezmoiOverwrite != "y" ]] && return 0
+    [[ $chezmoiOverwrite != "N" || $chezmoiOverwrite != "n" ]] && return 0
   fi
   git remote add origin $gitRepo
   git remote set-url $gitRepo
